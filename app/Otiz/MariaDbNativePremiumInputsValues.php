@@ -70,7 +70,7 @@ trait MariaDbNativePremiumInputsValues
         }
         $f = $x["fields"] ?? [];
         $edit=$this->db->prepare("SELECT revision,values_json,updated_at_utc FROM `{$p}fm2_object_detail_edits` WHERE object_id=? LIMIT 1");$edit->execute([$id]);$override=$edit->get_result()->fetch_assoc();$manual=[];
-        if($override){$manual=json_decode((string)$override['values_json'],true,512,JSON_THROW_ON_ERROR);foreach(['floors','weight','lift_type','pitmaterial']as$key)if(array_key_exists($key,$manual)){$value=$manual[$key];$display=in_array($key,['lift_type','pitmaterial'],true)&&$value!==null?\FMonitor2\InstallationProcess\ObjectDetailsReferenceCatalogue::display($key,(string)$value):(is_bool($value)?($value?'Да':'Нет'):$value);$f[$key]=['raw'=>$value,'display'=>$display];}}
+        if($override){$manual=json_decode((string)$override['values_json'],true,512,JSON_THROW_ON_ERROR);foreach(['floors','weight','lift_type','pitmaterial']as$key)if(array_key_exists($key,$manual)){$value=$manual[$key];$display=is_bool($value)?($value?'Да':'Нет'):$value;if(in_array($key,['lift_type','pitmaterial'],true)&&$value!==null){try{$display=\FMonitor2\InstallationProcess\ObjectDetailsReferenceCatalogue::display($key,(string)$value);}catch(\InvalidArgumentException){$display=$value;}}$f[$key]=['raw'=>$value,'display'=>$display];}}
         $floor = filter_var($f["floors"]["raw"] ?? null, FILTER_VALIDATE_INT, [
             "options" => ["min_range" => 1],
         ]);
@@ -78,7 +78,7 @@ trait MariaDbNativePremiumInputsValues
             "options" => ["min_range" => 1],
         ]);
         $text = mb_strtolower((string) ($f["lift_type"]["display"] ?? ""), "UTF-8");
-        $type = str_contains($text, "груз") ? "cargo" : (str_contains($text, "пассаж") ? "passenger" : null);
+        $type = str_contains($text, "груз") || $text === "cargo" ? "cargo" : (str_contains($text, "пассаж") || $text === "passenger" ? "passenger" : null);
         $n = new NativePremiumNorms();
         $premium = $floor === false || $cap === false ? null : $n->premiumCents($type, (int) $floor, (int) $cap);
         $shaft = $n->shaftBasisPoints((string) ($f["pitmaterial"]["display"] ?? ""));

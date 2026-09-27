@@ -65,6 +65,27 @@ The object and employee groupings MUST use the same revision and totals; multipl
 - **WHEN** a user enters a multi-object calculation from one object's payable link
 - **THEN** the page shows that object's contribution and the full calculation amount/scope before the single payment command, and filtering cannot create a partial payment
 
+### Requirement: Incremental allocation SHALL use newly recognized attribution
+Each accepted delta MUST allocate money only by contributions belonging to the newly recognized rights. Historical cumulative contribution MUST remain auditable but MUST NOT receive a share of later work performed by another recipient.
+
+#### Scenario: A later installer owns the whole increment
+- **WHEN** an accepted 30% right attributed to two installers is followed by 10% new work attributed only to the second installer
+- **THEN** the new obligation belongs only to the second installer while the accepted 30% attribution remains unchanged
+
+### Requirement: Draft scope and admission snapshot SHALL remain exact
+Draft creation MUST partition eligible new rights from no-delta and blocked/UNKNOWN objects. Allocation-only edits MUST preserve the prepared admission generation; refresh MUST rebuild facts and admission together. A calculation with no eligible new rights MUST NOT be approvable.
+
+#### Scenario: Multi-object refresh remains atomic
+- **WHEN** one draft contains an allowed object, blocked and UNKNOWN objects, and an object without a monetary delta
+- **THEN** refresh atomically preserves the eligible object and immutable exclusion reasons, and a late block rejects acceptance without partial financial facts
+
+### Requirement: Replacement SHALL preserve complete rights and corrected attribution
+A replacement preview MUST be built from all rights/cents owned by the replaced calculation plus explicitly allowed new rights, excluding other calculations. Completeness MUST be rechecked on refresh and acceptance. Corrected recipients MAY differ from old obligations when canonical attribution proves the correction.
+
+#### Scenario: Corrected attribution replaces recipient without losing rights
+- **WHEN** canonical correction evidence moves an accepted right from recipient A to recipient B
+- **THEN** a separate complete replacement draft preserves the right and cents, keeps the original active during preview, and transfers the obligation to B only on acceptance
+
 ### Requirement: One calculation register SHALL include queue and history
 The top-level OTIZ navigation MUST expose only `Расчёты` and `Экономика объектов`. The calculation register MUST filter the same identities by `Ожидают выплаты`, `Черновики`, `История`, and `Все`; historical URLs MUST resolve to the same register without duplicating data.
 

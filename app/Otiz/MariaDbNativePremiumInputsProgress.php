@@ -44,7 +44,7 @@ trait MariaDbNativePremiumInputsProgress
         $q = $this->db->prepare(
             "SELECT * FROM `{$p}fm2_checklist_operations` WHERE installation_case_id=? AND operation_type IN('item_completed','item_installers_changed','completion_retracted') AND LEFT(device_time,10)<=? AND LEFT(server_received_at,10)<=? ORDER BY accepted_revision,id",
         );
-        $q->execute([$case, $date, $date]);
+        $q->execute([$case, $date, substr((string) ($this->clock)(), 0, 10)]);
         $ops = $q->get_result()->fetch_all(MYSQLI_ASSOC);
         $ids = array_column($ops, "client_operation_id");
         $attrs = [];
@@ -123,8 +123,6 @@ trait MariaDbNativePremiumInputsProgress
             "template" => $t,
             "operations" => $ops,
             "attributions" => $attrs,
-            "completionFacts" => $facts,
-            "completionCorrections" => $cs,
         ];
         $proof = [
             "source" => $this->source(

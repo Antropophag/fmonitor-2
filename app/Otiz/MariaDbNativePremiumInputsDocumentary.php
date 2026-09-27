@@ -21,18 +21,24 @@ trait MariaDbNativePremiumInputsDocumentary
     }
     private function documentary(array $f, array $cs, string $type, string $cut): bool
     {
+        $preparedAt = substr((string) ($this->clock)(), 0, 10);
         foreach ($f as $r) {
             if ($r["fact_type"] === $type) {
                 if (
                     !$this->date($r["fact_date"]) ||
                     !$this->instant($r["recorded_at"]) ||
-                    substr($r["recorded_at"], 0, 10) > $cut
+                    substr($r["recorded_at"], 0, 10) > $preparedAt
                 ) {
                     return false;
                 }
                 $leaf = $r;
                 foreach ($cs as $c) {
-                    if ($c["root_fact_id"] === $r["id"] && substr($c["recorded_at"], 0, 10) <= $cut) {
+                    if (
+                        $c["root_fact_id"] === $r["id"] &&
+                        substr($c["recorded_at"], 0, 10) <= $preparedAt &&
+                        $this->date((string) $c["fact_date"]) &&
+                        $c["fact_date"] <= $cut
+                    ) {
                         $leaf = $c;
                     }
                 }

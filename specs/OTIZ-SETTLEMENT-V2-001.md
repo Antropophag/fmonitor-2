@@ -14,6 +14,14 @@
 
 Acceptance, current payment export и payment используют один owner-level допуск сохранённого snapshot. После любого incident #257 старый accepted snapshot остаётся недействующим платёжным основанием даже когда текущий producer снова сообщает `allow`; восстановить действующий export/payment может только явно принятый replacement. Draft, подготовленный до incident или смены admission source, нельзя принять по одному лишь текущему `allow`. Historical export остаётся доступным и однозначно не является платёжным реестром.
 
+Новый денежный объём распределяется только по attribution конкретных впервые признаваемых работ, а не по накопленному вкладу за всю историю объекта. Replacement-aware builder включает полное множество прав и денег заменяемого accepted расчёта без прав соседних расчётов; полнота проверяется при preview, refresh и atomic acceptance по rights/cents, но исправленный получатель не обязан совпадать с ошибочным прежним получателем.
+
+Обычные allocation edits сохраняют admission snapshot черновика; refresh атомарно пересобирает canonical facts и admission. Отсутствующий обязательный snapshot запрещает acceptance. Draft содержит только объекты с новыми правами и допустимым admission; preblocked/UNKNOWN объекты попадают в immutable explanatory exclusions, объекты без delta не создают нулевых денежных строк, а полностью пустой документ отклоняется.
+
+Baseline сравнивается со значением, полученным тем же locking read frontier. Cross-actor операции обязаны сохранять эту гарантию при штатной isolation и MariaDB REPEATABLE READ. Reversal различает ошибочную отметку без перечисления и финансовое сторно: только первый audited kind разрешает последующую отмену/замену расчёта, не удаляя payment/reversal history.
+
+Production XLSX получает сохранённые share basis points, accepted actor/time, content hash и issues/exclusions. Квып форматируется как процент, Кшах/Ксс как коэффициенты. Экономика агрегирует obligations один раз по object/calculation и отделяет object contribution от calculation remaining.
+
 ## Acceptance matrix
 
 - E01–E06: экономика начинается с полного разрешённого каталога, включает пустые/будущие/завершённые объекты; fund считается один раз; unknown не становится нулём; canonical overlays совпадают с карточкой; годы включают все значения и «Без года»; search/sort выполняются до root pagination, KPI относятся ко всему фильтру; portfolio-year не ограничивает payment queue; каждый положительный остаток раскрывается до active accepted obligations/recipients, а несвязанный legacy total показывается отдельной проблемой.

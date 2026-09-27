@@ -409,6 +409,8 @@
       "name": "otiz-premium-norms",
       "patterns": [
         "app/Otiz/MariaDbNativePremiumInputs.php",
+        "app/Otiz/MariaDbNativePremiumInputsDocumentary.php",
+        "app/Otiz/MariaDbNativePremiumInputsProgress.php",
         "app/Otiz/MariaDbSnapshotBuilderPersistence.php",
         "app/Otiz/MariaDbNativePremiumInputsValues.php",
         "app/Otiz/MariaDbObjectRegisterQuery.php",
