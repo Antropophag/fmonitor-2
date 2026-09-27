@@ -46,6 +46,7 @@
     "tests/Otiz/settlement_v2_corrections_001_test.php",
     "tests/Otiz/settlement_v2_corrections_integration_001_test.php",
     "tests/Support/otiz_settlement_v2_concurrency_worker.php",
+    "tests/Support/ExcelInputsAdversarial.php",
     "tests/Support/CurrentProductionSchemaContract.php",
     "tests/InstallationProcess/production_migration_runner_001_test.php",
     "tests/Runtime/runtime_recovery_forward_update_001_test.php",
