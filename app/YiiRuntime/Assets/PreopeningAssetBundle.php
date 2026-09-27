@@ -9,7 +9,7 @@ final class PreopeningAssetBundle extends \yii\web\AssetBundle
     public function init(): void
     {
         parent::init();
-        $this->css = ['shlz.css', AssetVersion::file('pilot.css'), 'preopening.css'];
+        $this->css = ['shlz.css', AssetVersion::file('pilot.css'), AssetVersion::file('preopening.css')];
         $this->js = ['preloader.js', AssetVersion::file('navigation.js'), AssetVersion::file('preopening.js'), 'template-offer.js'];
     }
 }

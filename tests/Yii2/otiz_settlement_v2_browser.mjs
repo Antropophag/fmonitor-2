@@ -57,8 +57,8 @@ try {
       1,
       "draft exposes lifecycle action " + action,
     );
-  const objectTab = page.getByRole("tab", { name: "По объектам" });
-  const employeeTab = page.getByRole("tab", { name: "По монтажникам" });
+  const objectTab = page.getByRole("radio", { name: "По объектам" });
+  const employeeTab = page.getByRole("radio", { name: "По монтажникам" });
   await objectTab.click();
   const toggles = page.locator("[data-otiz-group-toggle]");
   assert.equal(
@@ -155,7 +155,7 @@ try {
     path: path.join(c.artifacts, "desktop.png"),
     fullPage: true,
   });
-  await page.getByRole('tab',{name:'По объектам'}).click();
+  await page.getByRole('radio',{name:'По объектам'}).click();
   for(const toggle of await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').all())if(await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
   await page.screenshot({path:path.join(c.artifacts,'objects-expanded.png'),fullPage:true});
   const downloadPromise = page.waitForEvent("download");
@@ -205,6 +205,25 @@ try {
   const confirmation=page.locator('[data-v2-payment-dialog] [data-confirm-summary]');
   const confirmationText=(await confirmation.innerText()).replace(/\u00a0/g,' ');
   for(const text of ['#'+draftId,'26.09.2026','2 объекта','14 000,00','вне FMonitor'])assert.ok(confirmationText.includes(text),'whole payment scope visible: '+text);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const modal = page.locator('[data-v2-payment-dialog]');
+    const cancel = await modal.getByRole('button', {name:'Отмена',exact:true}).boundingBox();
+    const confirm = await modal.getByRole('button', {name:'Подтвердить выплату',exact:true}).boundingBox();
+    const surface = await modal.locator('.shlz-modal__surface').boundingBox();
+    assert.ok(Math.max(confirm.x-cancel.x-cancel.width,cancel.x-confirm.x-confirm.width,confirm.y-cancel.y-cancel.height,cancel.y-confirm.y-confirm.height)>=8,'payment buttons are separated');
+    for (const box of [cancel,confirm]) assert.ok(box.x>=surface.x+12 && box.x+box.width<=surface.x+surface.width-12 && box.y+box.height<=surface.y+surface.height-12,'payment actions have surface padding');
+    await modal.locator('[data-shlz-popover-trigger]').click();
+    await page.waitForFunction(()=>document.querySelector('[data-v2-payment-dialog] .shlz-date-picker__popover')?.style.position==='fixed');
+    const calendar = modal.locator('.shlz-date-picker__popover');
+    const geometry = await calendar.evaluate(el=>{const b=el.getBoundingClientRect();return {left:b.left,right:b.right,top:b.top,bottom:b.bottom,width:b.width,title:el.querySelector('.shlz-calendar__title').getBoundingClientRect().height,days:[...el.querySelectorAll('.shlz-calendar__day')].map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,width:r.width};})};});
+    assert.ok(geometry.width>=278&&geometry.width<=282,'public calendar is280px');
+    assert.ok(geometry.left>=7&&geometry.right<=width-7&&geometry.top>=7&&geometry.bottom<=893,'calendar stays inside viewport');
+    assert.ok(geometry.title<=20&&geometry.days.every(d=>d.left>=geometry.left&&d.right<=geometry.right&&d.width<=31),'calendar typography and all7 columns remain intact');
+    await page.screenshot({path:path.join(c.artifacts,`payment-calendar-${width}.png`)});
+    await calendar.locator('.shlz-calendar__day[data-in-month="true"]').first().click();
+  }
+  await page.setViewportSize({width:1440,height:1000});
   const visiblePaymentDate = page.getByLabel("Дата", { exact: true });
   assert.equal(
     await visiblePaymentDate.count(),

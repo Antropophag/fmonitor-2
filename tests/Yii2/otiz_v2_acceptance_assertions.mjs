@@ -11,7 +11,7 @@ export async function verifyUnsavedApproval(page, config) {
   const dialog=()=>page.locator('[data-v2-lifecycle-dialog="accept"]');
   const money=s=>s.replace(/\u00a0/g,' ').trim();
   const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-detail-row] tbody tr').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.querySelector('th a').getAttribute('href').slice(10),row.querySelector('td:last-child').textContent.replace(/\u00a0/g,' ').trim()])));
-  const confirm=async amount=>{if(await page.locator('dialog[open]').count())await page.keyboard.press('Escape');await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
+  const confirm=async amount=>{if(await page.locator('dialog[open]').count())await page.keyboard.press('Escape');await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});const surface=await dialog().locator('.shlz-modal__surface').boundingBox();const cancel=await dialog().getByRole('button',{name:'Отмена',exact:true}).boundingBox();const confirm=await dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).boundingBox();assert.ok(Math.max(confirm.x-cancel.x-cancel.width,cancel.x-confirm.x-confirm.width,confirm.y-cancel.y-cancel.height,cancel.y-confirm.y-confirm.height)>=8,'approval actions have a gap');for(const box of [cancel,confirm])assert.ok(box.x>=surface.x+12&&box.x+box.width<=surface.x+surface.width-12&&box.y+box.height<=surface.y+surface.height-12,'approval actions have surface padding');assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
   const previewDeduction=async()=>{await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByLabel(/Сумма удержания/).fill('1 000,00');await form().getByLabel(/Причина/).fill('U01 явное сохранение отдельно');await form().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="deduction"]').waitFor();assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1900000');};
   await page.goto(url(unsaved));await previewDeduction();
   await confirm('20 000,00');await page.screenshot({path:config.artifacts+'/u01-unsaved-approval.png',fullPage:true});await page.keyboard.press('Escape');
@@ -108,7 +108,7 @@ export async function verifyDraftWorkflow(page, config) {
   await page.goto(url);
   assert.ok(await page.locator('a[href="/pilot/objects/4512"]').count() > 0, 'calculation links to canonical object');
   for (const [grouping,panel,target] of [['По объектам','objects','employees'],['По монтажникам','employees','objects']]) {
-    await page.getByRole('tab', { name: grouping }).click();
+    await page.getByRole('radio', { name: grouping }).click();
     const container=page.locator(`[data-grouping="${panel}"]`);
     await container.locator('button[aria-expanded]').first().click();
     const link=container.locator('[data-otiz-crosslink]').first();
