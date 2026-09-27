@@ -99,6 +99,7 @@ function prbSeed(SelectedOriginalFixture $fixture,string $password):void
     $native->schema->insert($p.'fm2_pilot_roles',['role_id'=>4,'code'=>'otiz_manager','name'=>'ОТиЗ','description'=>'synthetic','status'=>1,'source_updated_at'=>'2026-09-01T06:00:00Z']);
     $native->schema->insert($p.'fm2_pilot_user_roles',['user_id'=>31,'role_id'=>4,'origin'=>'fixture','assigned_at'=>'2026-09-01T06:00:00Z']);
     foreach(['otiz.manage','objects.read']as$permission)$native->schema->insert($p.'fm2_pilot_role_permissions',['role_id'=>4,'permission'=>$permission]);
+    $db->query("INSERT INTO `{$p}fm2_otiz_admission_inputs`(object_id,source_revision,decision,reason_code,observed_at)VALUES(4512,'production-browser-v1','allow',NULL,'2026-09-01T06:00:00Z')");
     $otizHash=password_hash('Synthetic-Otiz-Browser-2026!',PASSWORD_ARGON2ID);$native->schema->insert($p.'fm2_pilot_auth_credentials',['user_id'=>31,'email_normalized'=>'test31@shlz.ru','password_hash'=>$otizHash,'updated_at'=>'2026-09-01T06:00:00Z']);
     $native->schema->insert($p.'fm2_pilot_users',['user_id'=>99,'full_name'=>'Администратор','email'=>'admin99@shlz.ru','status'=>1,'activation_state'=>'active','source_updated_at'=>'2026-09-01T06:00:00Z']);
     $native->schema->insert($p.'fm2_pilot_roles',['role_id'=>5,'code'=>'system_admin','name'=>'Администратор','description'=>'synthetic','status'=>1,'source_updated_at'=>'2026-09-01T06:00:00Z']);

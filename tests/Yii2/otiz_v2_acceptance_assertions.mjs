@@ -1,0 +1,158 @@
+import assert from 'node:assert/strict';
+
+// U01: the browser must confirm exactly the saved revision that the owner accepts.
+export async function verifyUnsavedApproval(page, config) {
+  await page.setViewportSize({width:1440,height:1000});
+  const [unsaved,saving]=config.previewDrafts;
+  const url=d=>config.origin+'/pilot/otiz/calculations/'+d.calculationId;
+  const form=()=>page.locator('form[data-recovery-deduction]');
+  const decision=()=>page.locator('form[data-recovery-decision]');
+  const dialog=()=>page.locator('[data-v2-lifecycle-dialog="accept"]');
+  const money=s=>s.replace(/\u00a0/g,' ').trim();
+  const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-detail-row] tbody tr').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.querySelector('th a').getAttribute('href').slice(10),row.querySelector('td:last-child').textContent.replace(/\u00a0/g,' ').trim()])));
+  const confirm=async amount=>{await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
+  const previewDeduction=async()=>{await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByLabel(/Сумма удержания/).fill('1 000,00');await form().getByLabel(/Причина/).fill('U01 явное сохранение отдельно');await form().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="deduction"]').waitFor();assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1900000');};
+  await page.goto(url(unsaved));await previewDeduction();
+  await confirm('20 000,00');await page.screenshot({path:config.artifacts+'/u01-unsaved-approval.png',fullPage:true});await page.keyboard.press('Escape');
+  assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 main recipient table is saved while deduction preview is unsaved');
+  await page.goto(url(unsaved));await page.getByRole('button',{name:/Решение по выплате/}).click();await decision().getByRole('radio',{name:'Не платить',exact:true}).check();await decision().getByLabel(/Основание решения/).fill('U01 не сохранять решение');await decision().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="decision"]').waitFor();
+  assert.equal(await page.locator('[data-preview-kind="decision"] [data-employee-id="A"]').getAttribute('data-after-cents'),'2000000');assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 decision preview never replaces saved approval recipients even at unchanged total');
+  await confirm('20 000,00');await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'saved20000 accepted');
+  await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
+  assert.deepEqual(await mainAmounts(),{A:'11 400,00 ₽',B:'7 600,00 ₽'},'explicit save changes the persisted recipient projection');await confirm('19 000,00');await page.screenshot({path:config.artifacts+'/u01-saved-approval.png',fullPage:true});
+  const fields=await dialog().locator('form').evaluate(form=>Object.fromEntries(new FormData(form)));
+  assert.equal(Number(fields.expectedRevision),Number(saving.revision)+1,'explicit save advances revision');
+  const stale=await page.request.post(url(saving)+'/accept',{form:{...fields,expectedRevision:String(saving.revision),operationId:'dddddddd-bbbb-4ddd-8ddd-000000000001'},maxRedirects:0});assert.equal(stale.status(),409,'stale expectedRevision cannot accept after save');
+  await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'fresh saved19000 accepted');
+}
+
+// OTIZ-SETTLEMENT-V2-001: agreed user actions on the real Yii runtime.
+export async function verifyDraftWorkflow(page, config) {
+  const url = config.origin + `/pilot/otiz/calculations/${config.draft.calculationId}`;
+  await page.goto(url);
+  const navigation=page.getByRole('navigation',{name:'Разделы ОТиЗ'});
+  assert.deepEqual((await navigation.getByRole('link').allTextContents()).map(x=>x.trim()).sort(),['Расчёты','Экономика объектов'].sort(),'one register and economy; no duplicate archive section');
+  assert.equal(await page.getByRole('button',{name:'Подтвердить утверждение',exact:true}).isVisible(),false,'accept confirmation is not a second always-visible primary action');
+  await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();
+  const acceptDialog=page.locator('[data-v2-lifecycle-dialog="accept"]');await acceptDialog.waitFor({state:'visible'});
+  assert.ok((await acceptDialog.innerText()).includes('#'+config.draft.calculationId),'approval preview names exact calculation');
+  assert.ok((await acceptDialog.innerText()).includes('15 000,00'),'approval preview shows full immutable sum');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Удалить черновик',exact:true}).click();
+  const deleteDialog=page.locator('[data-v2-lifecycle-dialog="delete"]');
+  await deleteDialog.waitFor({state:'visible'});
+  assert.equal(await deleteDialog.locator('input[name="reason"][type="hidden"]').count(),0,'deletion has no fabricated fixed reason');
+  assert.equal(await deleteDialog.getByLabel(/Причина/).getAttribute('required')!==null,true,'deletion requires explicit reason');
+  await page.keyboard.press('Escape');
+  assert.equal(await deleteDialog.isVisible(),false,'escape leaves original draft intact');
+  const decision = () => page.locator('form[action$="/decisions"]');
+  const openDecision = async () => {
+    await page.getByRole('button', { name: /Решение по выплате/ }).first().click();
+    assert.equal(await decision().count(), 1, 'one saved decision editor per stable dismissed employee, not per object');
+  };
+  await openDecision();
+  const revision = await decision().locator('[name="expectedRevision"]').inputValue();
+  await decision().getByRole('radio', { name: 'Не платить', exact: true }).check();
+  await decision().getByLabel(/Основание решения/).fill('Проверка двух объектов');
+  await decision().getByRole('button', { name: 'Предпросмотр', exact: true }).click();
+  const preview = page.locator('[data-preview-kind="decision"]');
+  await preview.waitFor();
+  for (const text of ['014903','014904','Иванов','Петров']) assert.ok((await preview.innerText()).includes(text), 'preview explains affected object and recipient '+text);
+  assert.equal(await preview.getAttribute('data-preview-total-cents'), '1500000', 'redistribution conserves both object pools');
+  for (const [object,employee,before,after] of [[4512,'A',540000,900000],[4512,'B',360000,0],[4513,'B',300000,0],[4513,'C',300000,600000]]) {
+    const row = preview.locator(`[data-object-id="${object}"][data-employee-id="${employee}"]`);
+    assert.deepEqual([await row.getAttribute('data-before-cents'),await row.getAttribute('data-after-cents')],[String(before),String(after)],'decision preview exact independent allocation');
+  }
+  assert.equal(await decision().locator('[name="expectedRevision"]').inputValue(), revision, 'preview changes no revision');
+  await page.screenshot({path:config.artifacts+'/decision-preview.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:config.artifacts+'/decision-preview-narrow.png',fullPage:true});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)<=1,'preview and controls stay inside narrow body');
+  await page.setViewportSize({width:1440,height:1000});
+  await decision().getByRole('button', { name: 'Сохранить решение', exact: true }).click();
+  await page.goto(url);
+  await openDecision();
+  assert.equal(await decision().getByRole('radio', { name: 'Не платить', exact: true }).isChecked(), true, 'saved choice survives reload');
+  assert.equal(await decision().getByLabel(/Основание решения/).inputValue(), 'Проверка двух объектов', 'saved reason survives reload');
+  // Navigate through the real shared editors; returning to the page closes a modal.
+  await page.goto(url);
+  await page.getByRole('button', { name: /Удержание/ }).first().click();
+  const deduction = () => page.locator('form[action$="/deductions"]').first();
+  await deduction().getByLabel(/Сумма удержания/).fill('1 000,00');
+  await deduction().getByLabel(/Причина/).fill('Удаляемое удержание');
+  await deduction().getByRole('button', { name: 'Предпросмотр', exact: true }).click();
+  const deductionPreview = page.locator('[data-preview-kind="deduction"]');
+  await deductionPreview.waitFor();
+  assert.equal(await deductionPreview.getAttribute('data-preview-total-cents'), '1400000', 'common deduction reduces only first object by 1000 rubles');
+  const reduced = deductionPreview.locator('[data-object-id="4512"][data-employee-id="A"]');
+  assert.deepEqual([await reduced.getAttribute('data-before-cents'),await reduced.getAttribute('data-after-cents')],['900000','800000'],'common preview before/after is exact');
+  await deduction().getByRole('button', { name: 'Добавить удержание', exact: true }).click();
+  await page.goto(url);
+  const saved = page.locator('[data-deduction-id]').filter({ hasText: 'Удаляемое удержание' });
+  assert.equal(await saved.count(), 1, 'saved deduction has an addressable identity and reason');
+  await saved.getByLabel(/Причина/).fill('Ошибочный ввод');
+  await saved.getByRole('button', { name: 'Удалить удержание', exact: true }).click();
+  await page.goto(url);
+  assert.equal(await page.locator('[data-deduction-id]').filter({ hasText: 'Удаляемое удержание' }).count(), 0, 'removed deduction disappears from active list');
+  await openDecision();
+  assert.equal(await decision().getByRole('radio', { name: 'Не платить', exact: true }).isChecked(), true, 'deduction removal preserves independent decision');
+  await decision().getByRole('radio', { name: 'Платить', exact: true }).check();
+  await decision().getByLabel(/Основание решения/).fill('Возвращено исходное распределение');
+  await decision().getByRole('button', { name: 'Сохранить решение', exact: true }).click();
+  await page.goto(url);
+  await openDecision();
+  assert.equal(await decision().getByRole('radio', { name: 'Платить', exact: true }).isChecked(),true,'return-to-pay survives reload without drift');
+  await page.goto(url);
+  assert.ok(await page.locator('a[href="/pilot/objects/4512"]').count() > 0, 'calculation links to canonical object');
+  for (const [grouping,panel,target] of [['По объектам','objects','employees'],['По монтажникам','employees','objects']]) {
+    await page.getByRole('tab', { name: grouping }).click();
+    const container=page.locator(`[data-grouping="${panel}"]`);
+    await container.locator('button[aria-expanded]').first().click();
+    const link=container.locator('[data-otiz-crosslink]').first();
+    await link.click();
+    assert.equal(await page.locator(`[data-grouping="${target}"]`).isVisible(),true,'crosslink switches hidden panel');
+    assert.ok(await page.locator(`[data-grouping="${target}"] [aria-expanded="true"]`).count()>0,'crosslink opens matching destination group');
+  }
+  await page.goto(url+'?group=objects&q=Иванов&pageSize=1&sort=amount_desc');
+  assert.equal(await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').count(),1,'search matches child and paginates parents');
+  assert.ok(await page.locator('[data-grouping="objects"]').getByText('Сидоров Сергей',{exact:false}).count()>0,'matching parent keeps its complete child subtotal');
+  assert.equal(await page.locator('input[name="q"]').inputValue(),'Иванов','server query preserved');
+  assert.equal(await page.locator('[data-grouping="objects"]').getByRole('table').count(),1,'object grouping is a semantic shlz table');
+  await page.goto(url+'?group=objects&pageSize=1&sort=amount_desc');
+  assert.ok((await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').innerText()).includes('014903'),'descending object amount begins with 9000');
+  const next=page.locator('a').filter({hasText:/Следующая/}).first();
+  const href=await next.getAttribute('href');
+  const target=new URL(href,config.origin);
+  assert.deepEqual([target.searchParams.get('page'),target.searchParams.get('sort'),target.searchParams.get('pageSize')],['2','amount_desc','1'],'real next page preserves query');
+  await next.click();
+  assert.ok((await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').innerText()).includes('014904'),'second page is next whole parent, not split children');
+  await page.goto(url+'?group=objects&pageSize=1&sort=amount_asc');
+  assert.ok((await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').innerText()).includes('014904'),'ascending object amount begins with 6000');
+  await page.goto(url+'?group=employees&pageSize=1&sort=amount_desc');
+  assert.equal(await page.locator('[data-grouping="employees"]').getByRole('table').count(),1,'employee grouping is semantic table');
+  assert.ok((await page.locator('[data-grouping="employees"] [data-otiz-employee-toggle]').innerText()).includes('Сидоров'),'employee subtotal sort uses B total6600 over two objects');
+  await page.goto(url+'?group=employees&pageSize=1&sort=amount_asc');
+  assert.ok((await page.locator('[data-grouping="employees"] [data-otiz-employee-toggle]').innerText()).includes('Петров'),'reverse employee sort starts with C3000');
+  await page.goto(url);
+  await page.getByRole('button',{name:/Удержание/}).first().click();
+  const personal=page.locator('form[action$="/deductions"]').first();
+  await personal.locator('select[name="employeeId"]').selectOption('A');
+  assert.equal(await personal.locator('select[name="employeeId"]').inputValue(),'A','personal scope uses exact stable recipient');
+  await personal.getByLabel(/Сумма удержания/).fill('1 000,00');
+  await personal.getByLabel(/Причина/).fill('Личное удержание А');
+  await personal.getByRole('button',{name:'Предпросмотр',exact:true}).click();
+  const personalPreview=page.locator('[data-preview-kind="deduction"]');
+  for(const [employee,amount] of [['A','440000'],['B','360000']])assert.equal(await personalPreview.locator(`[data-object-id="4512"][data-employee-id="${employee}"]`).getAttribute('data-after-cents'),amount,'personal deduction leaves other recipient unchanged');
+  await page.locator('form[action$="/deductions"]').first().getByRole('button',{name:'Добавить удержание',exact:true}).click();
+  const personalSaved=page.locator('[data-deduction-id]').filter({hasText:'Личное удержание А'});
+  await personalSaved.getByLabel(/Причина/).fill('Отмена личного удержания');
+  await personalSaved.getByRole('button',{name:'Удалить удержание',exact:true}).click();
+  await page.goto(url);
+  await page.getByRole('button',{name:/Удержание/}).first().click();
+  const restored=page.locator('form[action$="/deductions"]').first();
+  await restored.locator('select[name="employeeId"]').selectOption('A');
+  await restored.getByLabel(/Сумма удержания/).fill('1 000,00');
+  await restored.getByLabel(/Причина/).fill('Проверка восстановления без сохранения');
+  await restored.getByRole('button',{name:'Предпросмотр',exact:true}).click();
+  for(const [employee,amount]of [['A','540000'],['B','360000']])assert.equal(await page.locator(`[data-preview-kind="deduction"] [data-object-id="4512"][data-employee-id="${employee}"]`).getAttribute('data-before-cents'),amount,'deleting personal fact restores original exact recipient amounts');
+}

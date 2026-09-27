@@ -1,0 +1,23 @@
+{
+  "full_candidate": "redesign-otiz-settlements-v2",
+  "last_reviewed_source": "d3793d422a8f0bfa8286a1b7bff713cf169cf9e47ca9e58f77aebdf986d30283",
+  "candidate_delta": "root-authored executable DB, upgrade, concurrency, portfolio, HTTP, XLSX and canonical Yii browser RED suite",
+  "return_count": 3,
+  "findings": [
+    {"id":"g3-1-db-shape-only","status":"fixed","evidence":"fresh/repeat/upgrade, lifecycle, rollback and independent worker assertions in settlement_v2_db/concurrency/upgrade tests"},
+    {"id":"g3-1-workbook-source-scan","status":"fixed","evidence":"independent ZIP/XML assertions plus authenticated HTTP XLSX response parsing"},
+    {"id":"g3-1-http-browser-source-scan","status":"fixed","evidence":"canonical Yii server, real two-step login, real routes and PHP-driven Playwright journey at 1440/390"},
+    {"id":"g3-1-matrix-incomplete","status":"fixed","evidence":"literal domain, 85/10/5 documentary, state lifecycle, full portfolio, old debt, admission and workbook assertions"},
+    {"id":"g3-1-spec-external","status":"fixed","evidence":"self-contained OTIZ-SETTLEMENT-V2-001 public commands, matrix and M01-M24"},
+    {"id":"g3-1-planned-paths","status":"fixed","evidence":"legacy map, disposition and every RED/support path included in regenerated verification input"},
+    {"id":"g3-2-db-bootstrap","status":"fixed","evidence":"predecessor schema reaches v35 before explicit absent-v36 INTENDED_RED"},
+    {"id":"g3-2-http-bootstrap","status":"fixed","evidence":"login and existing page succeed before explicit missing-unified-register INTENDED_RED"},
+    {"id":"g3-2-browser-not-browser","status":"fixed","evidence":"Chromium reaches canonical Yii and fails only on missing unified-register control"},
+    {"id":"g3-2-portfolio-missing","status":"fixed","evidence":"settlement_v2_portfolio_001 covers catalog/year/page KPI/fund/draft neutrality and real 60k+15k obligations"},
+    {"id":"g3-2-concurrency-upgrade-lifecycle","status":"fixed","evidence":"v35 upgrade preservation, two-process accept/pay/pay-vs-reverse barriers, cancel/replace and rollback assertions"},
+    {"id":"g3-2-http-denials-only","status":"fixed","evidence":"populated decision/deduction/accept/export/pay success plus CSRF/stale/membership/#257 rejection with no-fact checks"},
+    {"id":"g3-3-m07-m15-fidelity","status":"fixed","evidence":"owner literal M07-M16 scenarios restored in normative spec"},
+    {"id":"g3-3-executable-matrix-gaps","status":"fixed","evidence":"domain/DB/portfolio/HTTP assertions cover exact cents, conflicts, zero payout, years/unknown/overlay/search, cancel/replace/reversal, corrected dates, old-snapshot admission, 6k+9k, multi-object scope, unlinked diagnostic, refresh/remove/delete/bounds"},
+    {"id":"g3-3-race-order","status":"fixed","evidence":"race outcomes normalized before asserting one winner and one loser"}
+  ]
+}

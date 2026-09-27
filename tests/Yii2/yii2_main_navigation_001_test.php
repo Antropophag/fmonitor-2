@@ -185,12 +185,13 @@ try {
     assertSameValue(true, $mainNode->ownerDocument === $otizDocument, 'MAIN navigation belongs to parsed OTIZ document');
     assertSameValue([[
         ['href' => '/pilot/otiz/objects', 'label' => 'Экономика объектов'],
-        ['href' => '/pilot/otiz/payments', 'label' => 'Выполнение расчёта'],
-        ['href' => '/pilot/otiz/history', 'label' => 'Архив расчётов'],
+        ['href' => '/pilot/otiz/payments', 'label' => 'Расчёты'],
     ]], $internal, 'OTIZ internal navigation remains one distinct semantic nav');
     foreach (['/pilot/otiz/objects', '/pilot/otiz/payments', '/pilot/otiz/history'] as $internalRoute) {
         $internalPage = $http->request('GET', $internalRoute, [], $cookies);
-        assertSameValue(200, $internalPage['status'], 'existing OTIZ internal route remains available ' . $internalRoute);
+        $expectedStatus=$internalRoute==='/pilot/otiz/history'?303:200;
+        assertSameValue($expectedStatus, $internalPage['status'], 'existing OTIZ internal route remains available ' . $internalRoute);
+        if($expectedStatus===303){assertSameValue('/pilot/otiz/payments?filter=history',$internalPage['headers']['location'][0]??null,'history deep link delegates to unified register');continue;}
         [$internalLinks] = $navigation($internalPage['body']);
         $active = array_values(array_column(array_filter($internalLinks, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
         assertSameValue(['/pilot/otiz'], $active, 'shared MAIN keeps OTIZ current on internal route ' . $internalRoute);

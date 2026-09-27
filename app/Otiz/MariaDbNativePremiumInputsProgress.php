@@ -44,7 +44,7 @@ trait MariaDbNativePremiumInputsProgress
         $q = $this->db->prepare(
             "SELECT * FROM `{$p}fm2_checklist_operations` WHERE installation_case_id=? AND operation_type IN('item_completed','item_installers_changed','completion_retracted') AND LEFT(device_time,10)<=? AND LEFT(server_received_at,10)<=? ORDER BY accepted_revision,id",
         );
-        $q->execute([$case, $date, $date]);
+        $q->execute([$case, $date, substr((string) ($this->clock)(), 0, 10)]);
         $ops = $q->get_result()->fetch_all(MYSQLI_ASSOC);
         $ids = array_column($ops, "client_operation_id");
         $attrs = [];
@@ -63,6 +63,7 @@ trait MariaDbNativePremiumInputsProgress
         }
         $active = [];
         $attrib = [];
+        $attribOperation = [];
         foreach ($ops as $o) {
             if (
                 !$t ||
@@ -82,8 +83,10 @@ trait MariaDbNativePremiumInputsProgress
                 }
                 $active[$item] = $o;
                 $attrib[$o["client_operation_id"]] = $by[$o["client_operation_id"]] ?? [];
+                $attribOperation[$o["client_operation_id"]] = $o["client_operation_id"];
             } elseif ($o["operation_type"] === "item_installers_changed" && isset($active[(int) $o["item_id"]])) {
                 $attrib[$active[(int) $o["item_id"]]["client_operation_id"]] = $by[$o["client_operation_id"]] ?? [];
+                $attribOperation[$active[(int) $o["item_id"]]["client_operation_id"]] = $o["client_operation_id"];
             } elseif ($o["operation_type"] === "completion_retracted") {
                 foreach ($active as $i => $event) {
                     if ($event["client_operation_id"] === $original) {
@@ -95,6 +98,7 @@ trait MariaDbNativePremiumInputsProgress
         ksort($active, SORT_NUMERIC);
         $bp = 0;
         $con = [];
+        $works = [];
         foreach ($active as $event) {
             $tabs = $attrib[$event["client_operation_id"]] ?? [];
             usort($tabs, "strcmp");
@@ -109,6 +113,30 @@ trait MariaDbNativePremiumInputsProgress
             foreach ($tabs as $i => $tab) {
                 $con[$tab] = ($con[$tab] ?? 0) + $each + ($i < $rem ? 1 : 0);
             }
+            $attributionRows = [];
+            $attributionOperationId = (string) ($attribOperation[$event["client_operation_id"]] ?? $event["client_operation_id"]);
+            foreach ($attrs as $attribution) {
+                if ((string) $attribution["client_operation_id"] === $attributionOperationId && in_array((string) $attribution["installer_tab_id"], $tabs, true)) {
+                    $attributionRows[(string) $attribution["installer_tab_id"]] = $attribution;
+                }
+            }
+            $basis = [
+                "caseId" => $case,
+                "itemId" => (int) $event["item_id"],
+                "shareBp" => $share,
+                "activeOperationId" => (string) $event["client_operation_id"],
+                "attributionOperationId" => $attributionOperationId,
+                "attribution" => array_values(array_map(fn(string $tab): array => $this->dbScalars($attributionRows[$tab] ?? ["installer_tab_id" => $tab]), $tabs)),
+            ];
+            $works[] = [
+                "sourceId" => "case-{$case}-item-".(int) $event["item_id"],
+                "itemId" => (int) $event["item_id"],
+                "shareBp" => $share,
+                "recognitionDate" => substr((string) $event["device_time"], 0, 10),
+                "sourceRevision" => hash("sha256", json_encode($basis, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)),
+                "installerTabIds" => $tabs,
+                "attribution" => $basis["attribution"],
+            ];
         }
         uksort($con, "strcmp");
         [$facts, $cs] = $this->allCompletion($case);
@@ -123,8 +151,6 @@ trait MariaDbNativePremiumInputsProgress
             "template" => $t,
             "operations" => $ops,
             "attributions" => $attrs,
-            "completionFacts" => $facts,
-            "completionCorrections" => $cs,
         ];
         $proof = [
             "source" => $this->source(
@@ -136,6 +162,7 @@ trait MariaDbNativePremiumInputsProgress
             "templateHash" => $t["content_sha256"] ?? null,
             "clientOperationIds" => array_values(array_column($active, "client_operation_id")),
             "contributions" => $con,
+            "works" => $works,
         ];
         return [min(10000, $bp), $proof, $con];
     }

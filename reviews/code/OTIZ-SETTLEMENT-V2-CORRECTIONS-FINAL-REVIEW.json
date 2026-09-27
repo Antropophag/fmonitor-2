@@ -1,0 +1,22 @@
+{
+  "gate": "final",
+  "verdict": "APPROVED",
+  "candidate_source": "1c0ce11224ae08530fca0485a295904eb83e6e5b34e578ea7d89782000a9a38f",
+  "snapshot": {
+    "base_commit": "0b4c0aaf5d82129e16a7d487c20a8d5dcb537bd3",
+    "patch_sha256": "5b620a0a2a36d32b53545c8114a052a415adf1d8268a27e73b31eccac202c605"
+  },
+  "reviewer": "/root/acceptance_review",
+  "recorded_at": "2026-09-27",
+  "findings": [],
+  "green_record_count": 21,
+  "scope": "full PR final review against owner requirements, review3 excluding withdrawn T08, normative spec, and frozen staged source",
+  "prior_review": {
+    "verdict": "APPROVED",
+    "candidate_source": "c5d69ad1b3a54a55276e558a1ce7a1fc679c99b6a83b6f59b662e669da786838",
+    "reviewer": "/root/acceptance_review",
+    "findings_count": 0,
+    "recorded_at": "2026-09-27"
+  },
+  "merge_or_deploy_authorized": false
+}

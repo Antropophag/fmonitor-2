@@ -22,10 +22,10 @@ final class InspectionFixture
         $f->db->query("INSERT INTO {$f->p}fm2_bitrix_order_document_links(source_folder_id,source_folder_name,order_number,url) VALUES(94512,'Рабочие чертежи','CONTROL-4512','https://bitrix24public.com/control-4512')");
         $f->db->query("INSERT INTO {$f->p}fm2_bitrix_order_document_links(source_folder_id,source_folder_name,order_number,url) VALUES(94513,'Соседний заказ',' CONTROL-4512 ','https://bitrix24public.com/control-neighbor')");
     }
-    public function open():void
+    public function open(array $installers=[7001,7002]):void
     {
         $f=$this->http;$f->start();$fk=[];assertSameValue(303,$f->login($fk)['status'],'fixture real FKR login');
-        assertSameValue(303,$f->selection($fk,ids:[7001,7002])['status'],'fixture selected crew');
+        assertSameValue(303,$f->selection($fk,ids:$installers)['status'],'fixture selected crew');
         $receipt=$f->upload($fk,$f->metadata($fk));assertSameValue(201,$receipt['status'],'fixture original');$r=json_decode($receipt['body'],true,flags:JSON_THROW_ON_ERROR);
         $opened=$f->form('/pilot/objects/4512/execution',['_csrf'=>$f->token($fk),'action'=>'open_confirmed','requestId'=>'33333333-3333-4333-8333-000000000001','orderId'=>'81','revisionId'=>$r['currentRevisionId'],'sequence'=>'0','actualStartDate'=>'2026-09-02'],$fk);
         assertSameValue(303,$opened['status'],'fixture real separate opening');
