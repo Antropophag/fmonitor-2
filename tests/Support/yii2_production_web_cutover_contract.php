@@ -78,7 +78,7 @@ return [
     ],
     'assets' => [
         'shlz.css'=>['bb5e00fba0a3b6804571fdc0a90caaa5ae62a03000d01501a63cd77d234fe99e','text/css; charset=UTF-8','public, max-age=3600'],
-        'pilot.css'=>['6beba49768871df15b6145d503f5a40443e3e94f075a3c5c5a66eb9441cedf8f','text/css; charset=UTF-8','public, max-age=3600'],
+        'pilot.css'=>['8bac0bf3b7fea455628f1ac5e9024d556557eada75784d77ee5f66dbe79a3eac','text/css; charset=UTF-8','public, max-age=3600'],
         'preopening.css'=>['7c69ca7f249c12ee9c4f8526a4ddf9f3de35dd0ca8a81e781b82dc2b6c5197aa','text/css; charset=UTF-8','public, max-age=3600'],
         'favicon.svg'=>['24b621ad3437c7ebec28fa5f2fe11c345b182a7ceb61e60acd99de163a3ea5b2','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'navigation.js'=>['305aa48f8f9a7e2e76cd9f74cb032316e53caea259742cda85b9ced394d6cdd3','text/javascript; charset=UTF-8','public, max-age=3600'],
@@ -95,7 +95,7 @@ return [
         'control-queue.js'=>['683009ae39ebeaa0efb4f7bd0c2a590b016dc9e98b35fabe4a02557ab5107722','text/javascript; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/delivery-box.svg'=>['b4517454d78cb79f5063022a65c7d685de5035b1baa204bc442fc181eb5afa04','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'shlz-icons/folder-file-open.svg'=>['c6bbeccbe6b8351fe7d4401ebef95fcca76adec022c891e8126905c8bc1ffb66','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
-        'otiz.js'=>['2d2265b2c1423152cb5e31b073a15813dee017d00640f32b904439a188cf0526','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'otiz.js'=>['df0c55a5680bf1a4e0928702b50c61d6f5ba8cd0832d314d8251f90e8e11c8eb','text/javascript; charset=UTF-8','public, max-age=3600'],
         'fonts/golos-text-cyrillic-400-normal.woff2'=>['15a5cbadfc1aa7a541651600b757bf7b67bce4e145b3239de072db5427889605','font/woff2','public, max-age=31536000, immutable'],
         'fonts/golos-text-cyrillic-500-normal.woff2'=>['22337b726df83521c7f6b2709e4717116eb53106c6140b45d751f36910191ecc','font/woff2','public, max-age=31536000, immutable'],
         'fonts/golos-text-cyrillic-600-normal.woff2'=>['1df9c46f33069094b4769bd2f5f04c5c37e4ce74c77bf062f3bb476d93cc3c2b','font/woff2','public, max-age=31536000, immutable'],

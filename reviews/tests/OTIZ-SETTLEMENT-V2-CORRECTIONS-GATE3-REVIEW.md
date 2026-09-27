@@ -379,3 +379,31 @@ No findings. The real HTTP zero-obligation accepted case now pins both sides of 
 The existing accepted-unpaid SSR helper independently proves those shared dialog forms have visible required reasons and no fabricated hidden reason. Together these assertions prevent the implementation from suppressing payment by erasing the true accepted lifecycle state. This is the inherited M10 plus R01/R02 behavior, not a new policy.
 
 The captured missing-cancel result is a genuine `INTENDED_RED`. Approval is limited to this exact test blob; production correction, exact-source GREEN rebinding, and final Gate 5 rereview remain required.
+
+---
+
+## Full-CI three-failure correction supplemental disposition — 2026-09-27
+
+- Verdict: `APPROVED`
+- Reviewer: `/root/acceptance_review`
+- Gate: `gate3`
+
+No blocking findings remain in the complete three-failure correction candidate.
+
+### Exact unchanged recovery tests
+
+- `tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php`: SHA-256 `39778c28544e708b178d3f85fa593efb509c38295924f3ad883ab153fd5c5cd7`, Git blob `0a87c524d707ef2aca7bfee941a59da824261326`
+- `tests/Yii2/otiz_settlement_v2_form_recovery_browser.mjs`: SHA-256 `d54220be0ad4e713cfedf5c6c920d4f33893493674baf6fabfb0676a7428816d`, Git blob `29a9a68994f3fe8016d4cbeaa151fb3c6a1df179`
+
+The previously approved public recovery expectation is unchanged. Restoring the two pre-existing `data-recovery-deduction` / `data-recovery-decision` hooks is the bounded production correction; it must make the retained real browser journey reach and verify the 422 recovery behavior rather than alter the test.
+
+### Exact corrected test blobs
+
+- `tests/Support/yii2_production_web_cutover_contract.php`: SHA-256 `c301f5b9123f404adb733510fea6ca4bd9ab4e46b82ab44d1806db4aa446b098`, Git blob `8aabbeca1c4e711048610965aba79af902097622`
+- `tests/Yii2/yii2_otiz_settlement_001_test.php`: SHA-256 `9ef3517beba91d67cc1b74cd857dd8642e3bf25340423ec841d8b2ed43ddeb3a`, Git blob `8d81aacb3128ee3d9525718ad8c35eaf82297b0a`
+
+The cutover contract changes only the two literal asset hashes, and both independently equal the reviewed `pilot.css` and `otiz.js` bytes. MIME/cache/security expectations and every other asset remain unchanged.
+
+The historical OTIZ compatibility test removes only the obsolete third visible `/history` tab requirement. It strengthens the replacement contract by requiring exactly two OTIZ navigation links and a real GET `/pilot/otiz/history` → HTTP 303 `/pilot/otiz/payments?filter=history`. Historical snapshot content, XLSX readability, retired legacy-writer rejection, guest authorization, and no-facts assertions remain intact. Both corrected tests are GREEN in the retained focused records.
+
+This is not expectation weakening and does not reuse the withdrawn T08 hypothesis. Approval covers the complete known CI failure inventory: the two test-contract synchronizations plus the already approved recovery production-hook restoration. After implementation, run the focused recovery/main-browser/HTTP checks, rebind the exact full source, and complete final review/CI handling without treating this approval as merge or deployment authorization.

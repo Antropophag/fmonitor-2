@@ -130,3 +130,29 @@ The approved supplemental test blob is unchanged (`1322ca5e83365ea9c784fe85d7abf
 All 14 mapped checks and four additional checks are GREEN at this exact source. These include the real browser journey/artifacts, native Excel inputs, main navigation, runtime boundary, and `make architecture-check` with HTTP qualification. Every prior Gate 3 approval and final-review correction remains satisfied, including workbook issue deduplication/mode banners/typed dates, payment export eligibility, canonical 67/67/66 weights, and current-read payment race protection.
 
 The external #257 producer and live enforcement #107 remain honestly `UNKNOWN`; missing evidence stays fail-closed and this approval does not claim those external integrations complete. Exact-source CI remains a separate mandatory publication gate. This final review authorizes neither merge nor deployment by itself.
+
+---
+
+## Complete CI-failure correction final review — 2026-09-27
+
+- Verdict: `APPROVED`
+- Exact source: `c5d69ad1b3a54a55276e558a1ce7a1fc679c99b6a83b6f59b662e669da786838`
+- Snapshot: base `719c00cca1b3505ef60d8253c71776febbebadcc`, patch SHA-256 `761bd3bf10e89b3f3d102977778749ac07324182463ec65157bca2b6127adcb1`
+- Reviewer: `/root/acceptance_review`
+- Gate: `final`
+
+### Findings
+
+No blocking findings remain.
+
+The complete three-failure CI correction is valid:
+
+- Production restores only the pre-existing `data-recovery-decision` and `data-recovery-deduction` hooks. The unchanged real browser recovery test now reaches the form and independently proves the 422 error, preserved amount/reason/document, identical operation/revision tokens, reopened editor, and no financial facts.
+- The cutover contract changes only the literal SHA-256 values for the reviewed `pilot.css` and `otiz.js` bytes. MIME types, cache policy, security expectations, routes, and every other pinned asset remain unchanged.
+- Historical snapshot compatibility now requires exactly the agreed two visible OTIZ sections and independently follows the legacy `/pilot/otiz/history` route to its 303 unified-history destination. Historical content/XLSX, guest authorization, retired legacy-writer rejection, and no-write guarantees remain intact.
+
+All 17 mapped checks plus four additional checks are GREEN at this exact source (`21/21`). This includes the three formerly failing consumers, both browser journeys/artifacts, native inputs, main navigation, runtime boundary, and `make architecture-check` with HTTP qualification. The prior failed CI run remains preserved as diagnosis; this review does not reinterpret it as flaky or skip any known failure.
+
+All earlier final-review and Gate 3 dispositions remain satisfied. The external #257 producer and live enforcement #107 remain explicitly `UNKNOWN`, with missing evidence fail-closed. A new exact-source CI run is still required; this approval alone does not authorize merge, deployment, backfill, or working-data mutation.
+
+No production or test bytes were altered by this review. Only the existing final-review Markdown and JSON records were updated.
