@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { openRowDecision, openCommonDeduction, openPersonalDeduction } from './otiz_v2_table_assertions.mjs';
 import { verifyOtizLayout } from './otiz_v2_layout_assertions.mjs';
 
 // U01: the browser must confirm exactly the saved revision that the owner accepts.
@@ -10,16 +11,16 @@ export async function verifyUnsavedApproval(page, config) {
   const decision=()=>page.locator('form[data-recovery-decision]');
   const dialog=()=>page.locator('[data-v2-lifecycle-dialog="accept"]');
   const money=s=>s.replace(/\u00a0/g,' ').trim();
-  const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-detail-row] tbody tr').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.querySelector('th a').getAttribute('href').slice(10),row.querySelector('td:last-child').textContent.replace(/\u00a0/g,' ').trim()])));
+  const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-allocation-row]').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.dataset.employeeId,row.querySelector('[data-allocation-amount]').textContent.replace(/\u00a0/g,' ').trim()])));
   const confirm=async amount=>{if(await page.locator('dialog[open]').count())await page.keyboard.press('Escape');await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});const surface=await dialog().locator('.shlz-modal__surface').boundingBox();const cancel=await dialog().getByRole('button',{name:'Отмена',exact:true}).boundingBox();const confirm=await dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).boundingBox();assert.ok(Math.max(confirm.x-cancel.x-cancel.width,cancel.x-confirm.x-confirm.width,confirm.y-cancel.y-cancel.height,cancel.y-confirm.y-confirm.height)>=8,'approval actions have a gap');for(const box of [cancel,confirm])assert.ok(box.x>=surface.x+12&&box.x+box.width<=surface.x+surface.width-12&&box.y+box.height<=surface.y+surface.height-12,'approval actions have surface padding');assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
-  const previewDeduction=async()=>{await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByLabel(/Сумма удержания/).fill('1 000,00');await form().getByLabel(/Причина/).fill('U01 явное сохранение отдельно');await form().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="deduction"]').waitFor();assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1900000');};
+  const previewDeduction=async()=>{await openCommonDeduction(page);await form().getByLabel(/Сумма удержания/).fill('1 000,00');await form().getByLabel(/Причина/).fill('U01 явное сохранение отдельно');await form().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="deduction"]').waitFor();assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1900000');};
   await page.goto(url(unsaved));await previewDeduction();
   await confirm('20 000,00');await page.screenshot({path:config.artifacts+'/u01-unsaved-approval.png',fullPage:true});await page.keyboard.press('Escape');
   assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 main recipient table is saved while deduction preview is unsaved');
-  await page.goto(url(unsaved));await page.getByRole('button',{name:/Решение по выплате/}).click();await decision().getByRole('radio',{name:'Не платить',exact:true}).check();await decision().getByLabel(/Основание решения/).fill('U01 не сохранять решение');await decision().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="decision"]').waitFor();
+  await page.goto(url(unsaved));await openRowDecision(page);await decision().getByRole('radio',{name:'Не платить',exact:true}).check();await decision().getByLabel(/Основание решения/).fill('U01 не сохранять решение');await decision().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="decision"]').waitFor();
   assert.equal(await page.locator('[data-preview-kind="decision"] [data-employee-id="A"]').getAttribute('data-after-cents'),'2000000');assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 decision preview never replaces saved approval recipients even at unchanged total');
   await confirm('20 000,00');await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'saved20000 accepted');
-  await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');if(!await form().isVisible())await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
+  await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');if(!await form().isVisible())await openCommonDeduction(page);await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
   assert.deepEqual(await mainAmounts(),{A:'11 400,00 ₽',B:'7 600,00 ₽'},'explicit save changes the persisted recipient projection');await confirm('19 000,00');await page.screenshot({path:config.artifacts+'/u01-saved-approval.png',fullPage:true});
   const fields=await dialog().locator('form').evaluate(form=>Object.fromEntries(new FormData(form)));
   assert.equal(Number(fields.expectedRevision),Number(saving.revision)+1,'explicit save advances revision');
@@ -48,7 +49,7 @@ export async function verifyDraftWorkflow(page, config) {
   assert.equal(await deleteDialog.isVisible(),false,'escape leaves original draft intact');
   const decision = () => page.locator('form[action$="/decisions"]');
   const openDecision = async () => {
-    await page.getByRole('button', { name: /Решение по выплате/ }).first().click();
+    await openRowDecision(page);
     assert.equal(await decision().count(), 1, 'one saved decision editor per stable dismissed employee, not per object');
   };
   await openDecision();
@@ -74,12 +75,13 @@ export async function verifyDraftWorkflow(page, config) {
   await page.setViewportSize({width:1440,height:1000});
   await decision().getByRole('button', { name: 'Сохранить решение', exact: true }).click();
   await page.goto(url);
+  assert.equal(await page.locator('[data-v2-deduction-open][data-employee-id="B"]').count(),0,'excluded worker exposes no personal deduction in either grouping');
   await openDecision();
   assert.equal(await decision().getByRole('radio', { name: 'Не платить', exact: true }).isChecked(), true, 'saved choice survives reload');
   assert.equal(await decision().getByLabel(/Основание решения/).inputValue(), 'Проверка двух объектов', 'saved reason survives reload');
   // Navigate through the real shared editors; returning to the page closes a modal.
   await page.goto(url);
-  await page.getByRole('button', { name: /Удержание/ }).first().click();
+  await openCommonDeduction(page);
   const deduction = () => page.locator('form[action$="/deductions"]').first();
   await deduction().getByLabel(/Сумма удержания/).fill('1 000,00');
   await deduction().getByLabel(/Причина/).fill('Удаляемое удержание');
@@ -91,8 +93,10 @@ export async function verifyDraftWorkflow(page, config) {
   assert.deepEqual([await reduced.getAttribute('data-before-cents'),await reduced.getAttribute('data-after-cents')],['900000','800000'],'common preview before/after is exact');
   await deduction().getByRole('button', { name: 'Добавить удержание', exact: true }).click();
   await page.goto(url);
+  await page.locator('[data-v2-holds-open]').click();
   const saved = page.locator('[data-deduction-id]').filter({ hasText: 'Удаляемое удержание' });
   assert.equal(await saved.count(), 1, 'saved deduction has an addressable identity and reason');
+  assert.match(await saved.innerText(),/014903/,'saved common deduction names exact object');
   await saved.getByLabel(/Причина/).fill('Ошибочный ввод');
   await saved.getByRole('button', { name: 'Удалить удержание', exact: true }).click();
   await page.goto(url);
@@ -137,9 +141,10 @@ export async function verifyDraftWorkflow(page, config) {
   await page.goto(url+'?group=employees&pageSize=1&sort=amount_asc');
   assert.ok((await page.locator('[data-grouping="employees"] [data-otiz-employee-toggle]').innerText()).includes('Петров'),'reverse employee sort starts with C3000');
   await page.goto(url);
-  await page.getByRole('button',{name:/Удержание/}).first().click();
+  await openCommonDeduction(page);
   const personal=page.locator('form[action$="/deductions"]').first();
-  await personal.locator('select[name="employeeId"]').selectOption('A');
+  await page.keyboard.press('Escape');
+  await openPersonalDeduction(page, '4512', 'A');
   assert.equal(await personal.locator('select[name="employeeId"]').inputValue(),'A','personal scope uses exact stable recipient');
   await personal.getByLabel(/Сумма удержания/).fill('1 000,00');
   await personal.getByLabel(/Причина/).fill('Личное удержание А');
@@ -147,15 +152,37 @@ export async function verifyDraftWorkflow(page, config) {
   const personalPreview=page.locator('[data-preview-kind="deduction"]');
   for(const [employee,amount] of [['A','440000'],['B','360000']])assert.equal(await personalPreview.locator(`[data-object-id="4512"][data-employee-id="${employee}"]`).getAttribute('data-after-cents'),amount,'personal deduction leaves other recipient unchanged');
   await page.locator('form[action$="/deductions"]').first().getByRole('button',{name:'Добавить удержание',exact:true}).click();
+  await page.locator('[data-v2-holds-open]').click();
   const personalSaved=page.locator('[data-deduction-id]').filter({hasText:'Личное удержание А'});
+  for(const identity of ['014903','Иванов'])assert.ok((await personalSaved.innerText()).includes(identity),'saved personal deduction names '+identity);
   await personalSaved.getByLabel(/Причина/).fill('Отмена личного удержания');
   await personalSaved.getByRole('button',{name:'Удалить удержание',exact:true}).click();
   await page.goto(url);
-  await page.getByRole('button',{name:/Удержание/}).first().click();
+  await openCommonDeduction(page);
   const restored=page.locator('form[action$="/deductions"]').first();
   await restored.locator('select[name="employeeId"]').selectOption('A');
   await restored.getByLabel(/Сумма удержания/).fill('1 000,00');
   await restored.getByLabel(/Причина/).fill('Проверка восстановления без сохранения');
   await restored.getByRole('button',{name:'Предпросмотр',exact:true}).click();
   for(const [employee,amount]of [['A','540000'],['B','360000']])assert.equal(await page.locator(`[data-preview-kind="deduction"] [data-object-id="4512"][data-employee-id="${employee}"]`).getAttribute('data-before-cents'),amount,'deleting personal fact restores original exact recipient amounts');
+  await page.keyboard.press('Escape');
+  await openPersonalDeduction(page, '4512', 'A');
+  assert.equal(await restored.getByLabel(/Причина/).inputValue(),'Проверка восстановления без сохранения','same row context retains pending input');
+  assert.equal(await page.locator('[data-preview-kind="deduction"]').isVisible(),true,'same row context retains matching preview');
+  await page.keyboard.press('Escape');
+  await openCommonDeduction(page, '4512');
+  assert.equal(await restored.locator('[name="employeeId"]').inputValue(),'','changing row context selects common deduction');
+  assert.equal(await page.locator('[data-preview-kind="deduction"]').isVisible(),false,'personal preview is not shown for common scope');
+  await page.keyboard.press('Escape');
+  await openCommonDeduction(page,'4513');
+  const secondObject=page.locator('dialog[open] form[data-recovery-deduction]');
+  await secondObject.getByLabel(/Сумма удержания/).fill('100,00');
+  await secondObject.getByLabel(/Причина/).fill('Preview второго объекта');
+  await secondObject.getByRole('button',{name:'Предпросмотр',exact:true}).click();
+  await page.locator('[data-preview-kind="deduction"]').waitFor({state:'visible'});
+  assert.equal(await page.locator('dialog[open] form[data-recovery-deduction] [name="objectId"]').inputValue(),'4513','second object preview opens its own editor');
+  assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1490000');
+  assert.equal(await page.locator('[data-preview-kind="deduction"] [data-object-id="4513"][data-employee-id="B"]').getAttribute('data-after-cents'),'295000','second object preview affects only selected object');
+
+
 }

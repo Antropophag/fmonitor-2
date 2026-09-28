@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { verifyReferenceTable, openRowDecision, openCommonDeduction } from "./otiz_v2_table_assertions.mjs";
 import { verifyDraftWorkflow, verifyUnsavedApproval } from "./otiz_v2_acceptance_assertions.mjs";
 import { verifyOtizLayout, verifyOtizRegisterLayouts } from "./otiz_v2_layout_assertions.mjs";
 const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
@@ -42,6 +43,10 @@ try {
       (await page.getByRole("link", { name: "Новый расчёт" }).count()),
     1,
   );
+  await page.goto(c.origin + `/pilot/otiz/calculations/${c.draft.calculationId}`);
+  assert.equal(await page.locator('[data-grouping="objects"] > .shlz-table-wrap > table table').count(), 0, 'reference object expansion shares one table column grid, never a nested mini-table');
+  assert.equal(await page.locator('[data-grouping="employees"] > .shlz-table-wrap > table table').count(), 0, 'reference employee expansion shares one table column grid');
+  await verifyReferenceTable(page, c);
   await verifyDraftWorkflow(page, c);
   const draftId = c.draft?.calculationId;
   assert.ok(draftId, "root fixture created a real draft");
@@ -86,24 +91,8 @@ try {
   assert.match(basisText, /9[\s\u00a0]000,00/);
   assert.match(basisText, /6[\s\u00a0]000,00/);
   await proof.locator('summary').click();
-  for (const label of [
-    "Исходный вклад",
-    "До удержаний",
-    "Удержание",
-    "Решение",
-    "Статус",
-    "Исключён",
-  ])
-    assert.match(
-      objectDetails,
-      new RegExp(label),
-      "object grouping explains saved revision field " + label,
-    );
-  assert.equal(
-    await page.getByRole("button", { name: /Удержание/ }).count(),
-    2,
-    "deduction action exists for every object",
-  );
+  for (const label of ['Объект / получатель','Объём / доля','До уменьшений','Уменьшение','К выплате','Уволен']) assert.ok(objectDetails.includes(label), 'reference object table explains '+label);
+  assert.equal(await page.locator('[data-grouping="objects"] [data-v2-deduction-open][data-employee-id=""]').count(),2,'common deduction action on each object');
   await employeeTab.click();
   const employeeToggles = page.locator("[data-otiz-employee-toggle]");
   for (let i = 0; i < (await employeeToggles.count()); i++)
@@ -112,19 +101,7 @@ try {
     .locator('[data-grouping="employees"]')
     .innerText();
   assert.match(employeeDetails, /Сидоров Сергей/);
-  for (const label of [
-    "Исходный вклад",
-    "До удержаний",
-    "Удержание",
-    "Решение",
-    "Статус",
-    "Исключён",
-  ])
-    assert.match(
-      employeeDetails,
-      new RegExp(label),
-      "employee grouping explains saved revision field " + label,
-    );
+  for (const label of ['Монтажник / объект','Объектов','Доля по объекту','К выплате','Уволен']) assert.ok(employeeDetails.includes(label), 'reference employee table explains '+label);
   assert.ok(
     (await page.locator("[data-otiz-employee-group]").count()) >= 3,
     "employee grouping has stable recipient parents",
@@ -133,18 +110,12 @@ try {
     (await page.locator("[data-object-contribution]").count()) >= 4,
     "employee grouping exposes per-object child contributions",
   );
-  await page
-    .getByRole("button", { name: /Решение по выплате/ })
-    .first()
-    .click();
+  await openRowDecision(page);
   const decisionForm = page.locator('form[action$="/decisions"]').first();
   await decisionForm.getByRole("radio", { name: "Не платить" }).check();
   await decisionForm.getByLabel(/Основание решения/).fill("Browser decision");
   await decisionForm.getByRole("button", { name: "Сохранить решение" }).click();
-  await page
-    .getByRole("button", { name: /Удержание/ })
-    .first()
-    .click();
+  await openCommonDeduction(page);
   const deductionForm = page.locator('form[action$="/deductions"]').first();
   await deductionForm.getByLabel(/Сумма удержания/).fill("1 000,00");
   await deductionForm.getByLabel(/Причина/).fill("Browser deduction");
