@@ -30,13 +30,29 @@ ViewSupport::begin($this, 'Дашборд', $identity, 'dashboard');
 <?php endforeach ?>
         </div>
     </section>
-<?php ob_start();if($installerForecastUnavailable):?><section class="shlz-chart-widget fm2-dashboard-chart fm2-installer-forecast" data-dashboard-chart="utilization" role="status"><h2>Загрузка монтажников и динамика</h2><p>Прогноз временно недоступен. Нулевые значения не публикуются.</p></section><?php else:$forecastNames=['busy'=>'Заняты','free'=>'Свободны','releasing'=>'Освобождаются','conflict'=>'Конфликты','unknown'=>'Нет данных']; ?>
-<section id="installer-utilization" class="shlz-chart-widget fm2-dashboard-chart fm2-installer-forecast" data-dashboard-chart="utilization" aria-labelledby="installer-utilization-title"><header class="shlz-chart-widget__header"><div><h2 id="installer-utilization-title">Загрузка монтажников и динамика</h2><p class="fm2-forecast-legend"><?php foreach($forecastNames as$key=>$name):?><span data-forecast-legend="<?=$key?>"><?=Html::encode($name)?></span><?php endforeach?></p></div></header><div class="fm2-forecast-scroll" tabindex="0"><div class="fm2-forecast-grid"><?php foreach($installerForecast['weeks']as$week):$label=(new DateTimeImmutable($week['start']))->format('d.m').'–'.(new DateTimeImmutable($week['end']))->format('d.m');?><section class="fm2-forecast-week"><h3><?=$label?></h3><p><?=$week['denominator']?> монтажников</p><div><?php foreach($forecastNames as$key=>$name):?><a class="fm2-forecast-value fm2-forecast-value--<?=$key?>" href="/pilot/dashboard/installers/forecast/<?=$week['start']?>/<?=$key?>" aria-label="<?=Html::encode($name.', '.$label.': '.$week[$key])?>"><strong><?=$week[$key]?></strong><span><?=Html::encode($name)?></span></a><?php endforeach?></div></section><?php endforeach?></div></div></section>
-<?php endif;$utilizationChart=(string)ob_get_clean();$stageTitle='Объекты по этапам процесса';$weekTitle='Плановая нагрузка на 6 недель';$riskTitle='Риск срыва ближайших стартов';
+<?php $stageTitle='Объекты по этапам процесса';$weekTitle='Плановая нагрузка на 6 недель';$riskTitle='Риск срыва ближайших стартов';
 $weekLabel=static fn(array $week):string=>(new DateTimeImmutable($week['start']))->format('d.m').'–'.(new DateTimeImmutable($week['end']))->format('d.m');
 $stageMax=max(1,...array_column($charts['stages'],'value'));$weekMax=max(1,...array_merge(array_column($charts['weeks'],'starts'),array_column($charts['weeks'],'finishes')));$riskMax=max(1,...array_column($charts['startRisk'],'value'));
 $bar=static function(string $href,string $name,string $label,int $value,int $maximum,string $tone='default',bool $showLabel=true):void{$height=4+($value===0?0:(int)round($value/$maximum*112));$y=116-$height;$mark=Html::tag('svg',Html::tag('rect','',['x'=>0,'y'=>$y,'width'=>56,'height'=>$height,'rx'=>4]),['class'=>'fm2-chart-bar__mark','viewBox'=>'0 0 56 116','preserveAspectRatio'=>'none','aria-hidden'=>'true']);?>
 <a class="fm2-chart-bar fm2-chart-bar--<?=Html::encode($tone)?><?=$showLabel?'':' fm2-chart-bar--legend-only'?>" data-dashboard-bar href="<?=Html::encode($href)?>" aria-label="<?=Html::encode($name)?>"><span class="fm2-chart-bar__mark-frame"><?=$mark?></span><span class="fm2-chart-bar__value" data-dashboard-value="<?=$value?>"><?=$value?></span><?php if($showLabel):?> <span class="fm2-chart-bar__label"><?=Html::encode($label)?></span><?php endif?></a><?php };
+ob_start();
+if ($installerForecastUnavailable): ?>
+<section class="shlz-chart-widget fm2-dashboard-chart fm2-installer-forecast" data-dashboard-chart="utilization" role="status"><h2>Загрузка монтажников и динамика</h2><p>Прогноз временно недоступен. Нулевые значения не публикуются.</p></section>
+<?php else:
+$forecastNames=['busy'=>'Занятые','free'=>'Свободные'];
+$forecastMax=1;
+foreach($installerForecast['weeks'] as $week)foreach($forecastNames as $key=>$_)$forecastMax=max($forecastMax,(int)$week[$key]);
+?>
+<section id="installer-utilization" class="shlz-chart-widget fm2-dashboard-chart fm2-installer-forecast" data-dashboard-chart="utilization" aria-labelledby="installer-utilization-title">
+<header class="shlz-chart-widget__header"><div><h2 id="installer-utilization-title">Загрузка монтажников и динамика</h2><p class="fm2-forecast-legend"><?php foreach($forecastNames as $key=>$name): ?><span data-forecast-legend="<?=$key?>"><?=Html::encode($name)?></span><?php endforeach ?></p></div></header>
+<div class="fm2-forecast-scroll" tabindex="0" role="region" aria-label="Загрузка монтажников по неделям"><div class="fm2-chart-weeks fm2-forecast-bars">
+<?php foreach($installerForecast['weeks'] as $week): $label=$weekLabel($week); ?>
+<div class="fm2-chart-week"><span class="fm2-chart-week__label" aria-label="<?=$label?>"><span><?=(new DateTimeImmutable($week['start']))->format('d.m')?></span><i aria-hidden="true"></i><span><?=(new DateTimeImmutable($week['end']))->format('d.m')?></span></span>
+<div class="fm2-chart-week__bars"><?php foreach($forecastNames as $key=>$name)$bar('/pilot/dashboard/installers/forecast/'.$week['start'].'/'.$key,$name.', '.$label.': '.$week[$key],$name,(int)$week[$key],$forecastMax,'forecast-'.$key,false); ?></div>
+<p class="fm2-forecast-total"><?=(int)$week['denominator']?> монтажников</p></div>
+<?php endforeach ?>
+</div></div></section>
+<?php endif; $utilizationChart=(string)ob_get_clean();
 ?>
     <div class="fm2-dashboard-primary-charts">
         <section class="shlz-chart-widget fm2-dashboard-chart" data-dashboard-chart="stages"><header class="shlz-chart-widget__header"><div><h2><?=$stageTitle?></h2><p>Текущий этап каждого объекта</p></div></header><div class="shlz-chart-widget__plot"><div class="fm2-chart-bars fm2-chart-bars--six">

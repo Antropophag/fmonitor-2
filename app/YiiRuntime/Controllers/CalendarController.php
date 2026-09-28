@@ -40,10 +40,6 @@ final class CalendarController extends PilotController
     {
         Yii::$app->response->headers->set('Cache-Control', 'no-store');
         $actorId = (int) Yii::$app->user->id;
-        if (!Yii::$app->canonicalAccess->checkAccess($actorId, 'objects.read')) {
-            throw new ForbiddenHttpException();
-        }
-
         $query = Yii::$app->request->queryParams;
         unset($query['slash']);
         $rawQuery = (string) ($_SERVER['QUERY_STRING'] ?? '');
@@ -79,7 +75,7 @@ final class CalendarController extends PilotController
                 Yii::$app->db,
                 $this->prefix(),
                 $this->legacyPrefix(),
-            )->readCalendar($actorId,$today->format('Y-m-d'),$first->format('Y-m-d'), $last->format('Y-m-d'));
+            )->readCalendar(0,$today->format('Y-m-d'),$first->format('Y-m-d'), $last->format('Y-m-d'));
         } catch (Throwable $error) {
             Yii::error('calendar_read_failed ' . $error::class, __METHOD__);
             throw new ServiceUnavailableHttpException('Календарь временно недоступен. Обновите страницу или вернитесь к объектам монтажа.');

@@ -66,7 +66,7 @@ try {
     $slash = $f->request('GET', '/pilot/calendar/', [], $allowed);
     assertSameValue(200, $slash['status'], 'slash route');
     $before=$f->facts();$repeat=$f->request('GET','/pilot/calendar',[],$allowed);assertSameValue(200,$repeat['status'],'repeat calendar GET');assertSameValue($before, $f->facts(), 'repeated calendar GET is byte-equivalent no-write');
-    assertSameValue(403, $f->request('GET', '/pilot/calendar', [], $denied)['status'], 'objects.read required');
+    assertSameValue(200, $f->request('GET', '/pilot/calendar', [], $denied)['status'], 'authenticated calendar does not require objects.read');
     $login = $f->request('GET', '/pilot/calendar', [], $guest);
     assertSameValue([303, '/pilot/login'], [$login['status'], $login['headers']['location'][0] ?? null], 'guest login flow');
     foreach (['date=bad', 'date=2026-01-01', 'date%5B%5D=2026-10-15', 'date=2026-10-15&date=2026-11-03', 'date=2026-10-15&extra=1'] as $query) {

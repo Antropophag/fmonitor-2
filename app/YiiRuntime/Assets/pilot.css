@@ -1989,18 +1989,13 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-installer-forecast { min-inline-size: 0; padding: 24px; }
 .fm2-installer-forecast h2,.fm2-installer-forecast h3 { margin: 0; }
 .fm2-forecast-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--shlz-semantic-color-text-secondary); }
-.fm2-forecast-legend span::before { content: ""; display: inline-block; inline-size: 10px; block-size: 10px; margin-inline-end: 6px; border: 2px solid currentColor; border-radius: 3px; }
-.fm2-forecast-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 12px 4px; }
-.fm2-forecast-grid { display: grid; grid-template-columns: repeat(6,minmax(150px,1fr)); gap: 1px; min-inline-size: 900px; background: var(--shlz-semantic-color-border-default); }
-.fm2-forecast-week { padding: 14px; background: var(--shlz-semantic-color-surface-base); }
-.fm2-forecast-week > p { margin: 5px 0 12px; color: var(--shlz-semantic-color-text-secondary); font-size: 12px; }
-.fm2-forecast-week > div { display: grid; gap: 6px; }
-.fm2-forecast-value { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px; border: 1px solid currentColor; border-radius: 8px; color: inherit; text-decoration: none; }
-.fm2-forecast-value strong { font-size: 20px; }
-.fm2-forecast-value span { font-size: 11px; }
-.fm2-forecast-value--releasing { border-style: dashed; }
-.fm2-forecast-value--conflict { border-width: 2px; }
-.fm2-forecast-value--unknown { border-style: dotted; }
+.fm2-forecast-legend span::before { content: ""; display: inline-block; inline-size: 10px; block-size: 10px; margin-inline-end: 6px; background: var(--fm2-forecast-color); border-radius: 2px; }
+.fm2-forecast-scroll { max-inline-size: 100%; overflow-x: auto; padding: 12px 4px 8px; }
+.fm2-forecast-scroll:focus-visible { outline: 3px solid var(--shlz-semantic-color-action-primary); outline-offset: 2px; }
+.fm2-forecast-bars .fm2-chart-bar__mark { color: var(--fm2-forecast-color); }
+.fm2-forecast-total { margin: 0; text-align: center; font-size: 11px; color: var(--shlz-semantic-color-text-secondary); }
+[data-forecast-legend="busy"],.fm2-chart-bar--forecast-busy { --fm2-forecast-color: var(--shlz-source-color-aditional-bright-blue,#3d88de); }
+[data-forecast-legend="free"],.fm2-chart-bar--forecast-free { --fm2-forecast-color: var(--shlz-source-color-aditional-bright-green,#25983e); }
 .fm2-dashboard-charts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; min-inline-size: 0; }
 .fm2-dashboard-chart { grid-template-rows: auto minmax(0,auto); gap: 18px; min-inline-size: 0; min-block-size: 0; padding: 24px; }
 .fm2-dashboard-chart > .shlz-chart-widget__plot { min-block-size: 0; overflow: visible; }
@@ -2294,6 +2289,17 @@ body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-calendar :is(.shlz-c
 [data-otiz-v2-calculation] :is(.fm2-otiz-v2-proof,.fm2-otiz-v2-history,.fm2-otiz-v2-excluded)>summary::after{content:"";flex:0 0 18px;inline-size:18px;block-size:18px;background:url('/pilot/assets/shlz-icons/chevron-right-duo.svg') center/contain no-repeat}
 [data-otiz-v2-calculation] :is(.fm2-otiz-v2-proof,.fm2-otiz-v2-history,.fm2-otiz-v2-excluded)[open]>summary::after{transform:rotate(90deg)}
 
+[data-otiz-v2-calculation] .fm2-otiz-v2-dismissed-summary{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 20px;border:1px solid #e8c7a5;border-radius:12px;background:#fff8f2;color:var(--fm2-ink)}
+[data-otiz-v2-calculation] .fm2-otiz-v2-dismissed-summary>span{display:grid;gap:4px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-dismissed-summary small{color:var(--fm2-muted);font-size:12px;font-weight:400}
+[data-otiz-v2-calculation] [data-object-dismissed-recipient]{display:inline-flex;inline-size:fit-content;max-inline-size:100%;margin-block-start:4px;overflow:visible;text-overflow:clip;white-space:normal}
+[data-otiz-v2-calculation] .fm2-otiz-v2-group-table thead{display:table-header-group}
+[data-otiz-v2-calculation] .fm2-otiz-v2-group-table thead tr{display:table-row}
+[data-otiz-v2-calculation] .fm2-otiz-v2-group-table thead .shlz-table__cell{position:static;inset:auto;vertical-align:middle}
+[data-otiz-v2-calculation] .fm2-otiz-v2-group-table--objects thead .shlz-table__cell:nth-child(n+3):nth-child(-n+5){text-align:end}
+[data-otiz-v2-calculation] .fm2-otiz-v2-group-table thead .shlz-table__cell:last-child{text-align:center}
+@media(max-width:680px){[data-otiz-v2-calculation] .fm2-otiz-v2-dismissed-summary{align-items:stretch;flex-direction:column}[data-otiz-v2-calculation] .fm2-otiz-v2-dismissed-summary .shlz-button{inline-size:100%}}
+
 [data-otiz-v2-calculation] dialog.shlz-modal{inline-size:min(620px,calc(100vw - 32px));max-inline-size:none;padding:0}
 [data-otiz-v2-calculation] dialog.shlz-modal>.shlz-modal__surface{inline-size:100%}
 [data-otiz-v2-calculation] dialog.fm2-otiz-confirm-dialog{inline-size:min(572px,calc(100vw - 32px))}
@@ -2303,3 +2309,6 @@ body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-calendar :is(.shlz-c
 [data-otiz-v2-calculation] dialog .shlz-field{inline-size:100%}
 body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-segment__input{inline-size:1px;block-size:1px;min-inline-size:1px;min-block-size:1px}
 [data-otiz-v2-calculation] dialog input[type="checkbox"]{inline-size:20px;block-size:20px;min-inline-size:20px!important;min-block-size:20px!important}
+
+.fm2-queue-progress { font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (min-width: 681px) { .fm2-queue-table .fm2-queue-progress { inline-size: 58px; padding-inline: 8px; text-align: right; } }
