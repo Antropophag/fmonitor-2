@@ -32,6 +32,15 @@ PHP_HTML_SELECT_ATOM = re.compile(
     r"|data-shlz-select(?:[-_][A-Za-z0-9_-]+)?)(?![A-Za-z0-9_-])"
 )
 PHP_HTML_SELECT_TAG = re.compile(r"</?select(?=[\s/>])", re.I)
+JS_CODE_SELECT_IDENTIFIER = re.compile(
+    r"\bselect\b(?=\s*(?:=>|\.(?:addEventListener|closest)\s*\())"
+)
+JS_DOM_SELECT_TOKEN = re.compile(r"\bselect\b")
+JS_DOM_SELECTOR_CALL = re.compile(r"(?:\.|\b)(?:querySelector(?:All)?|closest|matches)\s*\(\s*$")
+JS_SELECTOR_ATOM = re.compile(
+    r"[A-Za-z][A-Za-z0-9-]*(?:[.#][A-Za-z_][A-Za-z0-9_-]*)*"
+    r"(?:\[[^\]\s]+\])?(?::[A-Za-z-]+(?:\([^\s)]*\))?)*"
+)
 MUTATION_SQL = re.compile(r"\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
 WORKFORCE_MIGRATION_APPLY = re.compile(
     r"\b(?:BitrixWorkforceHistory|WorkforceCatalog)SchemaMigration\s*::\s*apply\s*\("
@@ -243,6 +252,91 @@ def php_sql_detection_line(line: str) -> str:
     return "".join(parts)
 
 
+def js_sql_detection_source(source: str) -> str:
+    """Ignore narrow DOM select tokens without rewriting JavaScript literals."""
+    parts: list[str] = []
+    code_start = 0
+    index = 0
+    length = len(source)
+
+    def flush_code(end: int) -> None:
+        nonlocal code_start
+        parts.append(JS_CODE_SELECT_IDENTIFIER.sub("JS_IDENTIFIER", source[code_start:end]))
+
+    def quoted_end(start: int, quote: str) -> int:
+        cursor = start + 1
+        while cursor < length:
+            if source[cursor] == "\\":
+                cursor += 2
+                continue
+            cursor += 1
+            if source[cursor - 1] == quote:
+                break
+        return cursor
+
+    while index < length:
+        if source.startswith("//", index):
+            flush_code(index)
+            end = source.find("\n", index + 2)
+            end = length if end < 0 else end
+            parts.append(source[index:end])
+            index = code_start = end
+            continue
+        if source.startswith("/*", index):
+            flush_code(index)
+            end = source.find("*/", index + 2)
+            end = length if end < 0 else end + 2
+            parts.append(source[index:end])
+            index = code_start = end
+            continue
+        char = source[index]
+        if char in "'\"`":
+            flush_code(index)
+            end = quoted_end(index, char)
+            quoted = source[index:end]
+            value = quoted[1:-1] if len(quoted) >= 2 and quoted[-1] == char else quoted[1:]
+            selector_list = "\n" not in value and (
+                value == "select" or (
+                    "," in value
+                    and all(JS_SELECTOR_ATOM.fullmatch(atom) for atom in value.split(","))
+                )
+            )
+            line_start = source.rfind("\n", 0, index) + 1
+            if selector_list and JS_DOM_SELECTOR_CALL.search(source[line_start:index]):
+                quoted = quoted[0] + JS_DOM_SELECT_TOKEN.sub("DOM_SELECTOR", value) + quoted[-1]
+            parts.append(quoted)
+            index = code_start = end
+            continue
+        if char == "/":
+            previous = source[:index].rstrip()
+            if not previous or previous[-1] in "=(:,![{;?":
+                flush_code(index)
+                cursor = index + 1
+                in_class = False
+                while cursor < length:
+                    if source[cursor] == "\\":
+                        cursor += 2
+                        continue
+                    if source[cursor] == "[":
+                        in_class = True
+                    elif source[cursor] == "]":
+                        in_class = False
+                    elif source[cursor] == "/" and not in_class:
+                        cursor += 1
+                        while cursor < length and source[cursor].isalpha():
+                            cursor += 1
+                        break
+                    elif source[cursor] == "\n":
+                        break
+                    cursor += 1
+                parts.append(source[index:cursor])
+                index = code_start = cursor
+                continue
+        index += 1
+    flush_code(length)
+    return "".join(parts)
+
+
 def collect() -> dict[str, list[str] | dict[str, int]]:
     violations: dict[str, list[str]] = collections.defaultdict(list)
     hotspot: dict[str, int] = {}
@@ -280,6 +374,7 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
         rel = path.relative_to(ROOT).as_posix()
         text = path.read_text(encoding="utf-8", errors="replace")
         lines = text.splitlines()
+        js_sql_lines = js_sql_detection_source(text).splitlines() if path.suffix == ".js" else []
         fingerprint_lines = without_php_global_call_qualifiers(text).splitlines()
         if not workforce_migration_owner(path):
             for rule, offset in workforce_ownership_matches(text):
@@ -323,7 +418,12 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                     )
             if DDL.search(line) and not ddl_owner(path):
                 violations["ddl_ownership"].append(finding("ddl", path, number, fingerprint_lines[number - 1], source_normalized=True))
-            sql_line = php_sql_detection_line(line) if path.suffix == ".php" else line
+            if path.suffix == ".php":
+                sql_line = php_sql_detection_line(line)
+            elif path.suffix == ".js":
+                sql_line = js_sql_lines[number - 1]
+            else:
+                sql_line = line
             if SQL.search(sql_line) and not sql_owner(path):
                 violations["sql_ownership"].append(finding("sql", path, number, fingerprint_lines[number - 1], source_normalized=True))
             if rel.startswith("app/Jobs/"):

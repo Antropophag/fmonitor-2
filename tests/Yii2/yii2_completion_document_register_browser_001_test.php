@@ -4,7 +4,7 @@ require dirname(__DIR__).'/bootstrap.php';
 require __DIR__.'/DocumentaryFixture.php';
 $fixture=null;$process=null;
 try{
-    $fixture=new DocumentaryFixture(dirname(__DIR__,2));$fixture->open();$fixture->progress();
+    $fixture=new DocumentaryFixture(dirname(__DIR__,2));$fixture->http->insert($fixture->http->p.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'access.administer']);$fixture->open();$fixture->progress();
     DocumentaryFixture::accepted($fixture->post('record_pto',['ptoActDate'=>'2026-09-05']));
     $http=$fixture->http;$before=$http->facts();
     $input=['url'=>'http://127.0.0.1:'.$http->server['port'],'cookies'=>$fixture->cookies,'artifacts'=>$http->artifacts,'playwright'=>getenv('FMONITOR_TEST_PLAYWRIGHT_MODULE')?:dirname($http->root).'/shlz-ui/node_modules/playwright'];

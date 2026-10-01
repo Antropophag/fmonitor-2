@@ -54,6 +54,8 @@ try{
     $guest=[];
     assertSameValue(303,$f->request('GET','/pilot/completion-register',[],$guest)['status'],'guest redirected');
     $cookies=[];assertSameValue(303,$f->login($cookies,95)['status'],'reader login');
+    assertSameValue(403,$f->request('GET','/pilot/completion-register',[],$cookies)['status'],'objects reader without admin denied');
+    $f->db->query("INSERT IGNORE INTO {$f->p}fm2_pilot_role_permissions(role_id,permission) SELECT role_id,'access.administer' FROM {$f->p}fm2_pilot_user_roles WHERE user_id=95");
     $page=$f->request('GET','/pilot/completion-register?mode=pto_without_declaration&q=EFFECTIVE-268&page=1',[],$cookies);
     assertSameValue(200,$page['status'],'register route');
     foreach(['ПТО и декларации','ПТО внесён, декларация не внесена','/pilot/objects/4512#completion','Эффективный адрес 268','EFFECTIVE-268']as$text)assertSameValue(true,str_contains($page['body'],$text),'register content '.$text);

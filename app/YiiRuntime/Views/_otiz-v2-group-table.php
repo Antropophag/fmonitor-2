@@ -28,8 +28,8 @@ $decision = static fn (string $value): string => $value === 'do_not_pay' ? 'Не
   </div>
   <div class="shlz-table-wrap" tabindex="0">
     <table class="shlz-table fm2-otiz-v2-group-table fm2-otiz-v2-group-table--<?=$axis?>">
-      <?php if ($axis === 'objects'): ?><colgroup><col style="width:30%"><col style="width:16%"><col style="width:14%"><col style="width:17%"><col style="width:19%"><col style="width:4%"></colgroup>
-      <?php else: ?><colgroup><col style="width:42%"><col style="width:9%"><col style="width:17%"><col style="width:27%"><col style="width:5%"></colgroup><?php endif ?>
+      <?php if ($axis === 'objects'): ?><colgroup><col><col><col><col><col><col></colgroup>
+      <?php else: ?><colgroup><col><col><col><col><col></colgroup><?php endif ?>
       <thead class="shlz-table__head"><tr class="shlz-table__row">
         <?php foreach ($axis === 'objects' ? ['Объект / получатель', 'Объём / доля', 'До уменьшений', 'Уменьшение', 'К выплате', 'Действия'] : ['Монтажник / объект', 'Объектов', 'Доля по объекту', 'К выплате', 'Действия'] as $index => $header): ?>
           <th class="shlz-table__cell" scope="col"><?php if ($index === ($axis === 'objects' ? 5 : 4)): ?><span class="shlz-visually-hidden"><?=$header?></span><?php else: ?><?=$header?><?php endif ?></th>
