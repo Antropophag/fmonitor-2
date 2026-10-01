@@ -35,7 +35,7 @@ const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8")),
       const csp = response.headers()["content-security-policy"] || "";
       if (response.status() !== expectedStatus)
         throw new Error(mode + " dashboard status " + response.status());
-      const bars = page.locator("[data-dashboard-bar]"),
+      const bars = page.locator('[data-dashboard-chart]:not([data-dashboard-chart="utilization"]) [data-dashboard-bar]'),
         count = await bars.count();
       if (mode === "error") {
         if (
@@ -53,7 +53,11 @@ const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8")),
         ])
           if (!(await page.locator("main").innerText()).includes(title))
             throw new Error("missing " + title);
-        if (count !== 23) throw new Error("expected 23 bars, got " + count);
+        if (count !== 23) throw new Error("expected 23 object bars, got " + count);
+        const forecast = page.locator('[data-dashboard-chart="utilization"]');
+        if (await forecast.locator('[data-dashboard-bar]').count() !== 12 ||
+            JSON.stringify(await forecast.locator('[data-forecast-legend]').allTextContents()) !== JSON.stringify(['Занятые', 'Свободные']))
+          throw new Error("installer chart must have only busy/free across six weeks");
         if (mode === "empty") {
           for (const text of await bars.allTextContents())
             if (!/\b0\b/.test(text))
@@ -128,7 +132,7 @@ const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8")),
         stageTracks: [...document.querySelectorAll('[data-dashboard-chart="stages"] [data-dashboard-bar]')].map((bar)=>({markY:bar.querySelector('.fm2-chart-bar__mark-frame').getBoundingClientRect().y,valueY:bar.querySelector('.fm2-chart-bar__value').getBoundingClientRect().y,labelY:bar.querySelector('.fm2-chart-bar__label').getBoundingClientRect().y})),
         weekRanges: [...document.querySelectorAll(".fm2-chart-week__label")].map((e) => ({parts:e.querySelectorAll("span").length,height:e.getBoundingClientRect().height})),
         repeatedWeekLabels: [...document.querySelectorAll('[data-dashboard-chart="weeks"] .fm2-chart-bar__label')].length,
-        weekColumns: document.querySelector(".fm2-chart-weeks") ? getComputedStyle(document.querySelector(".fm2-chart-weeks")).gridTemplateColumns.split(" ").length : 0,
+        weekColumns: document.querySelector('[data-dashboard-chart="weeks"] .fm2-chart-weeks') ? getComputedStyle(document.querySelector('[data-dashboard-chart="weeks"] .fm2-chart-weeks')).gridTemplateColumns.split(" ").length : 0,
         textClipped: [...document.querySelectorAll("[data-dashboard-chart] h2,[data-dashboard-chart] p,.fm2-chart-bar__label,.fm2-chart-week__label")].some((e) => e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1),
         pairedOffsets: [...document.querySelectorAll('[data-dashboard-chart="weeks"],[data-dashboard-chart="start-risk"]')].map((chart)=>({header:chart.querySelector('.shlz-chart-widget__header').getBoundingClientRect().height,mark:chart.querySelector('.fm2-chart-bar__mark-frame').getBoundingClientRect().y-chart.getBoundingClientRect().y})),
         labels: [...document.querySelectorAll("[data-dashboard-bar]")].map(

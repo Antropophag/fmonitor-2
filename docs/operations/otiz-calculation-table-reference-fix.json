@@ -1,0 +1,45 @@
+{
+  "change": "fix-otiz-calculation-table-reference",
+  "planned_paths": [
+    "app/YiiRuntime/Views/otiz-calculation-v2.php",
+    "app/YiiRuntime/Views/_otiz-v2-group-table.php",
+    "app/YiiRuntime/Assets/otiz.js",
+    "app/YiiRuntime/Assets/pilot.css",
+    "tests/Yii2/otiz_settlement_v2_browser.mjs",
+    "tests/Yii2/otiz_v2_acceptance_assertions.mjs",
+    "tests/Yii2/otiz_v2_table_assertions.mjs",
+    "tests/Yii2/yii2_otiz_v2_acceptance_001_test.php",
+    "docs/operations/otiz-calculation-table-reference-fix.json",
+    "docs/operations/otiz-calculation-table-reference-fix.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-TABLE-REFERENCE",
+      "acceptance_id": "contextual-actions-and-shared-column-grid",
+      "spec_path": "docs/operations/otiz-calculation-table-reference-fix.md",
+      "seam": "saved Yii calculation projection and existing command dialogs",
+      "tests": [
+        "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php",
+        "tests/Yii2/yii2_otiz_v2_acceptance_001_test.php"
+      ]
+    }
+  ],
+  "lifecycle": {
+    "intent": "COMPACT_MAINTENANCE",
+    "issue": "Owner emergency reference UI correction",
+    "change_kind": "PRESENTATION",
+    "requirement_status": "CURRENT",
+    "semantic_change": "AGREED_ORDINARY_CHANGE",
+    "canonical_requirements": [
+      {
+        "path": "docs/operations/otiz-calculation-table-reference-fix.md"
+      }
+    ],
+    "sensitivity": {
+      "classification": "ORDINARY",
+      "boundaries": [],
+      "rationale": "Render existing saved values and context of existing editors; no domain or command semantics change."
+    },
+    "executable_regression": "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php"
+  }
+}

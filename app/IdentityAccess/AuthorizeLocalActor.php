@@ -27,6 +27,7 @@ final readonly class AuthorizeLocalActor
         'checklist.edit',
         'inspection.schedule',
         'otiz.manage',
+        'composition_mismatch.produce',
         'management.read',
         'access.administer',
         'access.superadminister',

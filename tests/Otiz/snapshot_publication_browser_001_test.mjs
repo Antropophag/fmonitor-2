@@ -35,11 +35,11 @@ try {
   const createForm=page.locator('form[action="/pilot/otiz/calculations"]');
   const operation=await createForm.locator('input[name="operationId"]').inputValue();
   result.operationIdPresent=/^[a-f0-9-]{36}$/.test(operation);
-  const [year,month,day]=reportDate.split('-');await createForm.getByLabel('Дата',{exact:true}).fill(`${day}.${month}.${year}`);await createForm.getByLabel('Дата',{exact:true}).press('Tab');
+  const [year,month,day]=reportDate.split('-');await createForm.getByRole('textbox',{name:'Расчётная дата',exact:true}).fill(`${day}.${month}.${year}`);await createForm.getByRole('textbox',{name:'Расчётная дата',exact:true}).press('Tab');
   await Promise.all([page.waitForNavigation(),createForm.getByRole('button',{name:'Новый расчёт'}).click()]);
   await page.waitForURL(/\/pilot\/otiz\/calculations\/\d+\?created=1/);
   result.snapshotUrl=page.url().replace(`http://127.0.0.1:${port}`,'');
-  result.objectRows=await page.locator('[data-grouping="objects"] article').count();
+  result.objectRows=await page.locator('[data-grouping="objects"] [data-otiz-parent-row]').count();
   await page.screenshot({path:path.join(artifacts,'draft.png'),fullPage:true});
   const downloadPromise=page.waitForEvent('download');
   const exportResponsePromise=page.waitForResponse(response=>new URL(response.url()).pathname.endsWith('/export.xlsx'));
