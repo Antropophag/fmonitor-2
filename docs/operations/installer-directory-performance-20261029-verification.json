@@ -1,0 +1,30 @@
+{
+  "change": "installer-directory-performance-20261029",
+  "planned_paths": [
+    "app/Workforce/MariaDbInstallerUtilization.php",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/installer-directory-performance-20261029.md",
+    "tests/Yii2/yii2_installer_directory_work_budget_20261029_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "INSTALLER-DIRECTORY-PERFORMANCE-20261029",
+      "acceptance_id": "bounded-read-equivalence",
+      "spec_path": "docs/operations/installer-directory-performance-20261029.md",
+      "seam": "MariaDbInstallerUtilization::directory and Yii HTTP directory",
+      "tests": [
+        "tests/Yii2/yii2_installer_directory_work_budget_20261029_test.php",
+        "tests/Yii2/yii2_installer_directory_http_001_test.php",
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php",
+        "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_installer_directory_work_budget_20261029_test.php": "GREEN",
+        "tests/Yii2/yii2_installer_directory_http_001_test.php": "GREEN",
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php": "GREEN",
+        "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php": "GREEN"
+      }
+    }
+  ]
+}
