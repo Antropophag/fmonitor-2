@@ -283,6 +283,7 @@ db	php	tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php	integration
 db	php	tests/Yii2/yii2_original_transport_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_commands_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_concurrency_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_decision_preview_20261030_test.php	e2e
 db	php	tests/Yii2/yii2_otiz_decisions_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_evidence_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_feedback_browser_20261029_test.php	e2e
