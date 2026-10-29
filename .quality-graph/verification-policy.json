@@ -516,6 +516,8 @@
         "app/IdentityAccess/MariaDbReissueUserInvitation.php",
         "app/IdentityAccess/MariaDbUserAccessDirectory.php",
         "app/IdentityAccess/MariaDbUserInvitations.php",
+        "app/IdentityAccess/MariaDbUserActivation.php",
+        "app/YiiRuntime/Views/activate.php",
         "app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php",
         "app/InstallationProcess/LegacyControlEngineerImportSchemaMigration.php",
         "app/PilotHttp/MariaDbPilotUserDirectory.php",
