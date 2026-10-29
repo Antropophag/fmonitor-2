@@ -220,20 +220,22 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
         <?php endif ?>
         <div class="shlz-tabs fm2-object-tabs" data-shlz-tabs>
             <div class="shlz-tabs__list" role="tablist" aria-label="Разделы карточки объекта">
-                <button class="shlz-tabs__tab" id="object-tab-readiness" type="button" role="tab" aria-selected="true" aria-controls="object-panel-readiness">Сроки и готовность</button>
-                <button class="shlz-tabs__tab" id="object-tab-team" type="button" role="tab" aria-selected="false" aria-controls="object-panel-team" tabindex="-1">Команда</button>
+                <button class="shlz-tabs__tab" id="object-tab-readiness" type="button" role="tab" aria-selected="<?= $initialTab === 'readiness' ? 'true' : 'false' ?>" aria-controls="object-panel-readiness"<?= $initialTab === 'readiness' ? '' : ' tabindex="-1"' ?>>Сроки и готовность</button>
+                <button class="shlz-tabs__tab" id="object-tab-team" type="button" role="tab" aria-selected="<?= $initialTab === 'team' ? 'true' : 'false' ?>" aria-controls="object-panel-team"<?= $initialTab === 'team' ? '' : ' tabindex="-1"' ?>>Команда</button>
                 <button class="shlz-tabs__tab" id="object-tab-documents" type="button" role="tab" aria-selected="false" aria-controls="object-panel-documents" tabindex="-1">Документы</button>
                 <button class="shlz-tabs__tab" id="object-tab-history" type="button" role="tab" aria-selected="false" aria-controls="object-panel-history" tabindex="-1">История</button>
             </div>
-            <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-readiness" role="tabpanel" aria-labelledby="object-tab-readiness">
+            <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-readiness" role="tabpanel" aria-labelledby="object-tab-readiness"<?= $initialTab === 'readiness' ? '' : ' hidden' ?>>
                 <div class="fm2-tab-section">
                     <h2>Сроки монтажа</h2>
                     <dl class="fm2-fact-grid">
                         <div class="fm2-fact"><dt>Плановое начало</dt><dd><?= $plannedStartDate ? '<time datetime="' . Html::encode($plannedStartDate) . '">' . $date($plannedStartDate) . '</time>' : 'Неизвестно' ?></dd></div>
                         <div class="fm2-fact"><dt>Плановое завершение</dt><dd><?= $plannedFinishDate ? '<time datetime="' . Html::encode($plannedFinishDate) . '">' . $date($plannedFinishDate) . '</time>' : 'Неизвестно' ?></dd></div>
                         <?php if ($opened): ?><div class="fm2-fact"><dt>Фактическое начало</dt><dd><time datetime="<?= Html::encode($actualStartDate) ?>"><?= $date($actualStartDate) ?></time></dd></div><?php endif ?>
+                        <div class="fm2-fact"><dt>Актуальная дата ПТО</dt><dd><?= $completion['pto_act'] !== null ? '<time datetime="' . Html::encode($completion['pto_act']['date']) . '">' . $date($completion['pto_act']['date']) . '</time>' : 'Не указана' ?></dd></div>
+                        <?php if ($canReadDeadlineCertificate): ?><div class="fm2-fact"><dt>Срок для расчёта ОТИЗ по справке</dt><dd><?php if ($deadlineCertificate !== null): ?><time datetime="<?= Html::encode($deadlineCertificate['newDeadline']) ?>"><?= $date($deadlineCertificate['newDeadline']) ?></time> · <a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates/<?= (int) $deadlineCertificate['id'] ?>/pdf">Справка, редакция <?= (int) $deadlineCertificate['revisionNumber'] ?></a><?php else: ?>Справка отсутствует<?php endif ?></dd></div><?php endif ?>
                     </dl>
-                    <?php if (Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'deadline_certificate.read')): ?><div class="fm2-workspace-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates">Справки о переносе срока</a></div><?php endif ?>
+                    <?php if ($canReadDeadlineCertificate): ?><div class="fm2-workspace-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates">Справки о переносе срока</a></div><?php endif ?>
                 </div>
                 <div class="fm2-tab-section">
                     <h2>Готовность</h2>
@@ -250,6 +252,7 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                             <div class="fm2-fact"><dt>Время открытия</dt><dd><time data-opening-time datetime="<?= Html::encode($openedAt) ?>"><?= $date($openedAt, true) ?> МСК</time></dd></div>
                         <?php endif ?>
                     </dl>
+                    <p>Готовность к открытию означает, что документное основание принято. Завершение работ означает, что ПТО и декларация зафиксированы; выплаты могут оставаться незавершёнными.</p>
                     <?php if ($equipmentFacts['status'] === 'never_synced'): ?><p role="status">Синхронизация ещё не выполнялась</p>
                     <?php elseif ($equipmentFacts['status'] === 'failed_before_success'): ?><p role="status">Синхронизация завершилась ошибкой до первого успешного обновления</p>
                     <?php elseif ($equipmentFacts['status'] === 'failed_after_success'): ?><p role="status">Последняя попытка завершилась ошибкой</p>
@@ -257,7 +260,7 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                 </div>
                 <?php if ($opened) require __DIR__ . '/completion.php'; ?>
             </section>
-            <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-team" role="tabpanel" aria-labelledby="object-tab-team" hidden>
+            <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-team" role="tabpanel" aria-labelledby="object-tab-team"<?= $initialTab === 'team' ? '' : ' hidden' ?>>
                 <div class="fm2-tab-section">
                     <h2>Монтажники</h2>
                     <?php if ($order === null && $pendingComposition === null): ?><div class="fm2-quiet-empty"><strong>Состав ещё не выбран</strong><span>Монтажники появятся здесь после подготовки распоряжения.</span></div>

@@ -9,6 +9,7 @@ use FMonitor2\InstallationProcess\MariaDbYiiCompletionQuery;
 use FMonitor2\InstallationProcess\ControlEngineerAssignmentCommand;
 use FMonitor2\IdentityAccess\MariaDbYiiLocalIdentityStore;
 use FMonitor2\InspectionEvidence\MariaDbYiiChecklist;
+use FMonitor2\DeadlineTransferCertificate\{DeadlineTransferCertificates, MariaDbDeadlineCertificatePageQuery};
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Response;
@@ -46,6 +47,34 @@ final class ObjectCardController extends PreopeningController
             if ($documentAccess['status'] === 'unavailable') return $this->status(503, true);
             $completionQuery = new MariaDbYiiCompletionQuery(Yii::$app->db, (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX'));
             $completion = $completionQuery->read($id);
+            $canReadDeadlineCertificate = $this->cap('deadline_certificate.read');
+            $deadlineCertificate = null;
+            if ($canReadDeadlineCertificate) {
+                $deadlineResources = new PreopeningResources(Yii::$app->db);
+                try {
+                    $pageQuery = new MariaDbDeadlineCertificatePageQuery(
+                        Yii::$app->db,
+                        $deadlineResources->db,
+                        $deadlineResources->prefix,
+                        (string) getenv('FMONITOR_LEGACY_TABLE_PREFIX'),
+                    );
+                    $deadlineObject = $pageQuery->object($id);
+                    if ($deadlineObject === null) throw new \RuntimeException('Deadline certificate object unavailable.');
+                    $deadlineService = Yii::createObject(DeadlineTransferCertificates::class, [
+                        $deadlineResources->db,
+                        $deadlineResources->prefix,
+                        static fn (): string => gmdate('Y-m-d\TH:i:s\Z'),
+                    ]);
+                    try {
+                        $deadlineCertificate = $deadlineService->read($this->actor(), $deadlineObject['caseId'])['current'];
+                    } catch (\DomainException $error) {
+                        if ($error->getMessage() === 'FORBIDDEN') throw $error;
+                        throw new \RuntimeException('Deadline certificate evidence unavailable.', 0, $error);
+                    }
+                } finally {
+                    $deadlineResources->close();
+                }
+            }
             $checklistAccess = $this->checklistOwner()->access($this->actor(), $id);
             $identityStore = Yii::$app->localIdentity;
             if (!$identityStore instanceof MariaDbYiiLocalIdentityStore) throw new \RuntimeException('Identity store unavailable.');
@@ -62,6 +91,9 @@ final class ObjectCardController extends PreopeningController
                 'canReadOriginal' => $documentAccess['canRead'],
                 'canReadChecklist' => (bool) ($checklistAccess['read'] ?? false),
                 'completion' => $completion,
+                'canReadDeadlineCertificate' => $canReadDeadlineCertificate,
+                'deadlineCertificate' => $deadlineCertificate,
+                'initialTab' => Yii::$app->request->get('tab') === 'team' ? 'team' : 'readiness',
                 // Completion capabilities are not yet in the canonical RBAC registry; grants() is the existing exact active-grant read seam.
                 'canRecordPto' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.record'),
                 'canRecordDeclaration' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.declaration.record'),
