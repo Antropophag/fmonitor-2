@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const c=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const {chromium}=createRequire(import.meta.url)(c.playwright);
+const result={pageErrors:[],failedResponses:[]};
+const browser=await chromium.launch({headless:true});
+try {
+ const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
+ page.setDefaultTimeout(8000);
+ page.on('pageerror',e=>result.pageErrors.push(e.message));page.on('response',r=>{if(r.status()>=500)result.failedResponses.push([new URL(r.url()).pathname,r.status()]);});
+ await page.goto(c.origin+'/pilot/otiz/payments');await page.locator('input[name=email]').fill(c.email);await Promise.all([page.waitForNavigation(),page.locator('button[type=submit]').click()]);await page.locator('input[name=password]').fill(c.password);await Promise.all([page.waitForNavigation(),page.locator('button[type=submit]').click()]);
+ const url=c.origin+'/pilot/otiz/calculations/'+c.draft.calculationId;
+ await page.goto(url);
+ for(const id of ['A','B','C'])assert.equal(await page.locator('#decision-'+id).count(),1,'every employee has decision editor');
+ assert.match(await page.locator('body').innerText(),/Сохранённая доля|Сохранено|резерв/i);
+ for(const filter of ['excludeFrame','excludeCompleted','excludeDismissed','onlyReserved'])assert.equal(await page.locator('input[name='+filter+']').count(),1,'usable filter '+filter);
+ await page.locator('[data-otiz-group-toggle]').first().click();
+ await page.screenshot({path:path.join(c.artifacts,'desktop.png'),fullPage:true});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'desktop no body overflow');
+ await page.goto(url+'?group=employees&excludeDismissed=1');
+ assert.equal(await page.locator('[data-otiz-allocation-row][data-employee-id=B]').count(),0,'same employee exclusion in browser');
+ const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'Скачать отчёт с отбором',exact:true}).click()]);await download.saveAs(path.join(c.artifacts,'report.xlsx'));
+ await page.setViewportSize({width:390,height:844});await page.goto(url+'?group=employees');
+ await page.screenshot({path:path.join(c.artifacts,'narrow.png'),fullPage:true});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'narrow no body overflow');
+ assert.deepEqual(result.pageErrors,[]);assert.deepEqual(result.failedResponses,[]);
+ console.log('PASS: reserve/report desktop+narrow UI and filtered download');
+}finally{fs.writeFileSync(path.join(c.artifacts,'result.json'),JSON.stringify(result));await browser.close();}

@@ -612,6 +612,8 @@
         ,"app/Otiz/MariaDbNativeOtizAdmission.php"
         ,"app/Otiz/MariaDbOtizCalculationRegister.php"
         ,"app/Otiz/MariaDbOtizPortfolioEconomy.php"
+        ,"app/Otiz/MariaDbOtizMonthlyTotals.php"
+        ,"app/Otiz/OtizCalculationReportFilter.php"
         ,"app/YiiRuntime/Controllers/OtizSettlementV2Controller.php"
         ,"app/YiiRuntime/Controllers/OtizAdmissionController.php"
         ,"app/YiiRuntime/Views/otiz-v2-register.php"
