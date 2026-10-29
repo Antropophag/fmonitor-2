@@ -1,0 +1,32 @@
+{
+  "change": "otiz-filters-decisions-20261029",
+  "planned_paths": [
+    "app/YiiRuntime/Views/otiz-calculation-v2.php",
+    "app/YiiRuntime/Views/_otiz-v2-group-table.php",
+    "app/YiiRuntime/Controllers/OtizSettlementV2Controller.php",
+    "app/YiiRuntime/Assets/otiz.js",
+    "app/YiiRuntime/Assets/pilot.css",
+    "specs/OTIZ-FILTERS-DECISIONS-20261029.md",
+    "docs/operations/otiz-filters-decisions-20261029.md",
+    "docs/operations/otiz-filters-decisions-20261029-verification.json",
+    "tests/Yii2/yii2_otiz_filters_decisions_20261029_test.php",
+    "tests/Yii2/otiz_filters_decisions_20261029_browser.mjs",
+    "tools/verification/suites.tsv",
+    "reviews/code/OTIZ-FILTERS-DECISIONS-20261029.md",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-FILTERS-DECISIONS-20261029",
+      "acceptance_id": "ui-navigation",
+      "spec_path": "specs/OTIZ-FILTERS-DECISIONS-20261029.md",
+      "seam": "real Yii GET and browser navigation, no financial mutation",
+      "tests": [
+        "tests/Yii2/yii2_otiz_filters_decisions_20261029_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_otiz_filters_decisions_20261029_test.php": "GREEN"
+      }
+    }
+  ]
+}

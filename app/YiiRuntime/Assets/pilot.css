@@ -2312,5 +2312,37 @@ body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-calendar :is(.shlz-c
 body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-segment__input{inline-size:1px;block-size:1px;min-inline-size:1px;min-block-size:1px}
 [data-otiz-v2-calculation] dialog input[type="checkbox"]{inline-size:20px;block-size:20px;min-inline-size:20px!important;min-block-size:20px!important}
 
+[data-otiz-v2-calculation] .fm2-otiz-v2-report-filter-control{position:relative;min-inline-size:0}
+[data-otiz-v2-calculation] .fm2-otiz-v2-report-filter-control>.shlz-button{inline-size:100%;justify-content:space-between}
+[data-otiz-v2-calculation] .fm2-otiz-v2-filter-count{display:inline-grid;place-items:center;min-inline-size:22px;block-size:22px;padding-inline:5px;border-radius:999px;background:var(--fm2-primary);color:#fff;font-size:12px;font-variant-numeric:tabular-nums}
+[data-otiz-v2-calculation] .fm2-otiz-v2-report-filters{box-sizing:border-box;inline-size:280px;max-inline-size:calc(100vw - 24px);z-index:20}
+[data-otiz-v2-calculation] .fm2-otiz-v2-report-filters .shlz-popover__body{display:grid;gap:10px;padding:14px 16px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-report-filters .shlz-choice{display:flex;align-items:center;gap:9px;inline-size:100%;min-block-size:32px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-pagination-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0 2px;border-block-start:1px solid var(--fm2-border)}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-size{display:flex;align-items:center;gap:10px;flex:0 0 auto;margin:0}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-size label{color:var(--fm2-muted);font-size:13px;white-space:nowrap}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-size .shlz-field__control{inline-size:78px;block-size:40px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation{display:flex;align-items:center;justify-content:flex-end;min-inline-size:0;color:var(--fm2-muted);font-size:13px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation>.shlz-pagination__summary{white-space:nowrap}
+[data-otiz-v2-calculation] dialog.fm2-otiz-v2-decisions-dialog>.shlz-modal__surface{padding:0;overflow:hidden}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__header{padding:20px 24px 14px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__title{margin:0}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__body{padding:0 24px 24px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__body>p{margin:0 0 14px;color:var(--fm2-muted);line-height:1.5}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-list{display:grid;gap:8px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decision-choice{display:grid;gap:3px;inline-size:100%;padding:12px 14px;border:1px solid var(--fm2-border);border-radius:10px;background:#fff;color:var(--fm2-ink);font:inherit;text-align:start;cursor:pointer}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decision-choice:hover{background:var(--fm2-filter)}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decision-choice:focus-visible{outline:2px solid var(--fm2-primary);outline-offset:2px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-decision-choice span{color:var(--fm2-muted);font-size:12px}
+@media(max-width:680px){[data-otiz-v2-calculation] .fm2-otiz-v2-report-filter-control,[data-otiz-v2-calculation] .fm2-otiz-v2-report-filter-control>.shlz-button{inline-size:100%}[data-otiz-v2-calculation] .fm2-otiz-v2-pagination-row{align-items:stretch;flex-direction:column}[data-otiz-v2-calculation] .fm2-otiz-v2-page-size{justify-content:space-between}[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation{justify-content:flex-start;overflow-x:auto}[data-otiz-v2-calculation] dialog.fm2-otiz-v2-decisions-dialog{inline-size:calc(100vw - 24px)}[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__header{padding:18px 18px 12px}[data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__body{padding:0 18px 18px}}
+
+[data-otiz-v2-calculation] .fm2-otiz-v2-query{grid-template-columns:minmax(260px,1fr) minmax(210px,280px) max-content}
+[data-otiz-v2-calculation] .fm2-otiz-v2-query:has(>a.shlz-button){grid-template-columns:minmax(260px,1fr) minmax(210px,280px) repeat(2,max-content)}
+[data-otiz-v2-calculation] .fm2-otiz-v2-report-filters .shlz-checkbox{box-sizing:border-box;flex:0 0 20px;inline-size:20px!important;block-size:20px!important;min-inline-size:20px!important;min-block-size:20px!important;margin:0;padding:0}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation{gap:14px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-count{white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(max-width:900px){[data-otiz-v2-calculation] .fm2-otiz-v2-query,[data-otiz-v2-calculation] .fm2-otiz-v2-query:has(>a.shlz-button){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){[data-otiz-v2-calculation] .fm2-otiz-v2-query,[data-otiz-v2-calculation] .fm2-otiz-v2-query:has(>a.shlz-button){grid-template-columns:minmax(0,1fr)}[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation{align-items:flex-start;flex-direction:column}}
+
 .fm2-queue-progress { font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (min-width: 681px) { .fm2-queue-table .fm2-queue-progress { inline-size: 58px; padding-inline: 8px; text-align: right; } }
