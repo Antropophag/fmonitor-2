@@ -9,9 +9,9 @@ final class MariaDbErpEquipmentFactsSource
     {
         return "SELECT sale.Номер AS sourceOrderNumber, NULLIF(CONVERT(varchar(10), MAX(sroki.ДатаКомплектности), 23), '0001-01-01') AS readinessDate, NULLIF(CONVERT(varchar(10), MAX(sroki.ДатаПолнойОтгрузки), 23), '0001-01-01') AS fullShipmentDate
 FROM [1c-erp].[BI_DЗаказКлиентаID] sale
-JOIN [1c-erp].[BI_DЗаказНаПроизводство2_2ID] prod ON prod.Номер = sale.Номер
 LEFT JOIN [1c-erp].[BI_Sпроф_СрокиХраненияГотовойПродукцииID] sroki ON sroki.ЗаказКлиента = sale.Ссылка
 WHERE sale.Номер IN (".self::parameters($count).")
+  AND EXISTS (SELECT 1 FROM [1c-erp].[BI_DЗаказНаПроизводство2_2ID] prod WHERE prod.ДокументОснование = sale.Ссылка)
 GROUP BY sale.Номер";
     }
     public static function shipmentsQuery(int $count): string

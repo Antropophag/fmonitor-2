@@ -441,6 +441,7 @@ unit	php	tests/InstallationProcess/document_render_html_001_test.php	unit
 unit	php	tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php	unit
 unit	php	tests/InstallationProcess/erp_equipment_facts_operational_001_test.php	unit
 unit	php	tests/InstallationProcess/erp_equipment_facts_owner_boundary_001_test.php	unit
+unit	python3	tests/InstallationProcess/erp_order_document_link_20261030_test.py	unit
 unit	php	tests/InstallationProcess/harness_artifact_isolation_001_test.php	integration
 unit	php	tests/InstallationProcess/inspection_evidence_sql_owner_policy_test.php	governance
 unit	php	tests/InstallationProcess/inspection_item_complete_001_authorization_test.php	unit
