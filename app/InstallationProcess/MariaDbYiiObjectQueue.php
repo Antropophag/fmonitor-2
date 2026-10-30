@@ -217,6 +217,7 @@ final readonly class MariaDbYiiObjectQueue
             'address'=>$r['ordadr_address'], 'entrance'=>$r['entrance'],
             'comment'=>is_string($r['comment']??null)?$r['comment']:null,
             'plannedStartDate'=>$start ?? 'Не указано', 'plannedFinishDate'=>$finish ?? 'Не указано',
+            'actualStartDate'=>self::date($r['actual_start_date']),
             'planningDatesUnknownAtCutover'=>$start === null || $finish === null,
             'dataOrigin'=>'migration_native', 'status'=>$label,
             'nextStep'=>'Откройте карточку объекта монтажа',

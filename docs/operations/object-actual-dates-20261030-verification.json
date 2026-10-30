@@ -1,0 +1,25 @@
+{
+  "change": "object-actual-dates-20261030",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueueProjection.php",
+    "app/YiiRuntime/Views/objects.php",
+    "tests/Yii2/yii2_object_actual_dates_20261030_test.php",
+    "tools/verification/suites.tsv",
+    "docs/operations/object-actual-dates-20261030.md",
+    "docs/operations/object-actual-dates-20261030-verification.json",
+    "reviews/code/OBJECT-ACTUAL-DATES-20261030.md",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-ACTUAL-DATES-20261030",
+      "acceptance_id": "queue-factual-dates",
+      "spec_path": "docs/operations/object-actual-dates-20261030.md",
+      "seam": "real Yii object queue read",
+      "tests": ["tests/Yii2/yii2_object_actual_dates_20261030_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_object_actual_dates_20261030_test.php": "GREEN"}
+    }
+  ]
+}

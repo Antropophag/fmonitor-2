@@ -696,6 +696,7 @@
       "name": "yii-object-read-presentation",
       "patterns": [
         "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+        "app/InstallationProcess/MariaDbYiiObjectQueueProjection.php",
         "app/InstallationProcess/MariaDbYiiObjectCard.php",
         "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
         "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
@@ -706,6 +707,7 @@
       ],
       "verifiers": [
         "tests/Yii2/yii2_object_queue_001_test.php",
+        "tests/Yii2/yii2_object_actual_dates_20261030_test.php",
         "tests/Yii2/yii2_object_card_001_test.php"
       ],
       "consumers": []
