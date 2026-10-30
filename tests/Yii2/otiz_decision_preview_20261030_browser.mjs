@@ -15,7 +15,7 @@ try{
  await page.locator('[data-grouping=objects] [data-otiz-group-toggle]').first().click();
  await page.locator('[data-grouping=objects] [data-v2-decision-open][data-employee-id="202"]').first().click();
  let dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');
- assert.equal(await dialog.locator('[name=employeeId]').inputValue(),'202');
+ assert.equal(await dialog.locator('[name=employeeId]').inputValue(),'202');assert.equal(await dialog.locator('[name=objectId]').inputValue(),'4512');
  await dialog.getByRole('radio',{name:'Не платить',exact:true}).check();await dialog.locator('[name=reason]').fill('Проверка решения выбранного монтажника');
  const operation=await dialog.locator('[name=operationId]').inputValue(),revision=await dialog.locator('[name=expectedRevision]').inputValue();
  await Promise.all([page.waitForNavigation(),dialog.getByRole('button',{name:'Предпросмотр',exact:true}).click()]);
@@ -26,18 +26,18 @@ try{
  assert.equal(await dialog.locator('[name=operationId]').inputValue(),operation);assert.equal(await dialog.locator('[name=expectedRevision]').inputValue(),revision);
  const preview=dialog.locator('[data-preview-kind=decision]');await preview.waitFor();
  const ids=await preview.locator('tbody tr').evaluateAll(rows=>[...new Set(rows.map(r=>r.dataset.objectId))].sort());
- assert.deepEqual(ids,['4512','4513'],'decision preview includes only objects of selected employee');
+ assert.deepEqual(ids,['4512'],'decision preview includes only selected object');
  assert.equal(await preview.locator('[data-employee-id="404"]').count(),0,'unrelated employee/object hidden');
- assert.equal(await preview.locator('[data-employee-id="202"]').count(),2,'selected employee shown on both participating objects');
- assert.equal(await preview.locator('tbody tr').count(),4,'all affected allocation rows retained');
- for(const [object,employee,amount]of [['4512','101','540000'],['4513','303','300000']]){const row=preview.locator(`[data-object-id="${object}"][data-employee-id="${employee}"]`);assert.equal(await row.count(),1,'co-worker effect remains visible');assert.equal(await row.getAttribute('data-before-cents'),amount);assert.equal(await row.getAttribute('data-after-cents'),amount);}
- assert.equal(await preview.getAttribute('data-preview-total-cents'),'840000','preview payable total limited to affected objects');
- assert.equal(await preview.getAttribute('data-preview-reserved-cents'),'660000','preview reserves limited to affected objects');
+ assert.equal(await preview.locator('[data-employee-id="202"]').count(),1,'selected employee shown only on selected object');
+ assert.equal(await preview.locator('tbody tr').count(),2,'only selected object allocation rows retained');
+ for(const [object,employee,amount]of [['4512','101','540000']]){const row=preview.locator(`[data-object-id="${object}"][data-employee-id="${employee}"]`);assert.equal(await row.count(),1,'co-worker effect remains visible');assert.equal(await row.getAttribute('data-before-cents'),amount);assert.equal(await row.getAttribute('data-after-cents'),amount);}
+ assert.equal(await preview.getAttribute('data-preview-total-cents'),'540000','preview payable total limited to selected object');
+ assert.equal(await preview.getAttribute('data-preview-reserved-cents'),'360000','preview reserves limited to selected object');
  await dialog.screenshot({path:path.join(c.artifacts,'desktop.png')});
  await page.setViewportSize({width:390,height:844});await dialog.screenshot({path:path.join(c.artifacts,'narrow.png')});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  await page.keyboard.press('Escape');
  await page.goto(url+'?group=employees');
- await page.locator('[data-grouping=employees] [data-v2-decision-open][data-employee-id="303"]').click();
+ await page.locator('[data-grouping=employees] [data-v2-decision-open][data-employee-id="303"]:visible').click();
  dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.locator('[name=reason]').fill('Другой монтажник');
  await Promise.all([page.waitForNavigation(),dialog.getByRole('button',{name:'Предпросмотр',exact:true}).click()]);
  dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.waitFor();assert.equal(await dialog.locator('[name=employeeId]').inputValue(),'303');
@@ -49,11 +49,24 @@ try{
  await Promise.all([page.waitForNavigation(),dialog.getByRole('button',{name:'Предпросмотр',exact:true}).click()]);
  dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.waitFor();assert.equal(await dialog.locator('[name=objectId]').inputValue(),'4513','deduction preview keeps exact second object');assert.equal(await dialog.locator('[data-preview-kind=deduction]').isVisible(),true);
  await page.keyboard.press('Escape');await page.goto(url+'?group=employees');
- await page.locator('[data-grouping=employees] [data-v2-decision-open][data-employee-id="202"]').click();
+ const parent=page.locator('#employee-202');assert.equal(await parent.locator('[data-v2-decision-open]').count(),0,'multi-object employee has no implicit global action');await parent.locator('[data-otiz-employee-toggle]').click();await page.locator('[data-grouping=employees] [data-v2-decision-open][data-employee-id="202"][data-object-id="4512"]').click();
  dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.locator('[name=reason]').fill('Сохранить введённое при конфликте редакции');
  await dialog.locator('[name=expectedRevision]').evaluate(node=>node.value='999');
  await Promise.all([page.waitForNavigation(),dialog.getByRole('button',{name:'Предпросмотр',exact:true}).click()]);
  dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.waitFor();assert.equal(await dialog.locator('[name=employeeId]').inputValue(),'202','stale preview recovers selected numeric employee');assert.equal(await dialog.locator('[name=reason]').inputValue(),'Сохранить введённое при конфликте редакции');assert.equal(await page.locator('[data-preview-kind]').count(),0,'error does not render stale preview');
+ assert.equal(await dialog.getByRole('alert').isVisible(),true,'stale error is visible inside recovered modal');
+ await page.keyboard.press('Escape');await page.goto(url+'?group=objects');
+ await page.locator('[data-grouping=objects] [data-otiz-group-toggle]').first().click();
+ await page.locator('[data-grouping=objects] [data-v2-decision-open][data-employee-id="202"]').first().click();
+ dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.getByRole('radio',{name:'Не платить',exact:true}).check();await dialog.locator('[name=reason]').fill('');
+ await dialog.locator('form').evaluate(form=>form.noValidate=true);
+ const invalidResponse=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname.includes('/decision'));
+ await Promise.all([page.waitForNavigation(),dialog.getByRole('button',{name:'Сохранить решение',exact:true}).click()]);
+ assert.equal((await invalidResponse).status(),422,'missing reason rejected server-side');
+ dialog=page.locator('.fm2-otiz-v2-editor-dialog[open]');await dialog.waitFor();
+ assert.equal(await dialog.count(),1,'only matching decision modal recovers');assert.equal(await dialog.locator('[name=objectId]').inputValue(),'4512');assert.equal(await dialog.locator('[name=employeeId]').inputValue(),'202');
+ assert.equal(await dialog.getByRole('alert').isVisible(),true,'missing reason error is visible inside recovered modal');
+ assert.equal(await page.locator('[data-preview-kind]').count(),0,'invalid reason has no preview');
  assert.deepEqual(result.pageErrors,[]);assert.deepEqual(result.failedResponses,[]);
  console.log('PASS: numeric employee preview context, scoped objects/totals and read-only state');
 }finally{fs.writeFileSync(path.join(c.artifacts,'result.json'),JSON.stringify(result));await browser.close();}

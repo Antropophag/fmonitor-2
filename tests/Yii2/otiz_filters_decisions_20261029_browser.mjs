@@ -21,8 +21,8 @@ try {
  assert.equal(page.url(),beforeUrl,'decision chooser does not reload/filter report');
  assert.ok(Math.abs(await page.evaluate(()=>scrollY)-before)<4,'decision chooser preserves scroll');
  const chooser=page.locator('[data-v2-decisions-dialog][open]');
- assert.equal(await chooser.locator('[data-v2-decision-open]').count(),2,'all dismissed recipients offered');
- await chooser.locator('[data-v2-decision-open][data-employee-id="B"]').click();
+ assert.equal(await chooser.locator('[data-v2-decision-open]').count(),3,'all dismissed object-recipient pairs offered');
+ await chooser.locator('[data-v2-decision-open][data-employee-id="B"][data-object-id="4512"]').click();
  const editor=page.locator('.fm2-otiz-v2-editor-dialog[open]');
  assert.equal(await editor.locator('[name=employeeId]').inputValue(),'B','correct decision editor');
  assert.ok((await editor.innerText()).includes('Сидоров Сергей'));
@@ -76,7 +76,7 @@ try {
  await page.locator('[data-v2-decisions-dialog][open]').waitFor();await page.locator('[data-v2-decisions-dialog][open]').screenshot({path:path.join(c.artifacts,'decisions-narrow.png')});await page.keyboard.press('Escape');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'narrow no document overflow');
  const noJs=await browser.newContext({javaScriptEnabled:false,storageState:await page.context().storageState()});
- const nativePage=await noJs.newPage();await nativePage.goto(url);const fallback=nativePage.locator('[data-dismissed-recipients-warning]').getByRole('link',{name:'Решения по выплате'});const href=await fallback.getAttribute('href');assert.ok(href.startsWith('#'));await fallback.click();const target=nativePage.locator(href);assert.equal(await target.isVisible(),true,'native fallback reaches visible editor section');assert.equal(await target.locator('#decision-B summary').isVisible(),true);await noJs.close();
+ const nativePage=await noJs.newPage();await nativePage.goto(url);const fallback=nativePage.locator('[data-dismissed-recipients-warning]').getByRole('link',{name:'Решения по выплате'});const href=await fallback.getAttribute('href');assert.ok(href.startsWith('#'));await fallback.click();const target=nativePage.locator(href);assert.equal(await target.isVisible(),true,'native fallback reaches visible editor section');assert.equal(await target.locator('#decision-4512-B summary').isVisible(),true);await noJs.close();
  assert.deepEqual(result.pageErrors,[]);assert.deepEqual(result.failedResponses,[]);
  console.log('PASS: OTIZ filters/footer pagination/decision chooser desktop and narrow');
 }finally{fs.writeFileSync(path.join(c.artifacts,'result.json'),JSON.stringify(result));await browser.close();}
