@@ -234,3 +234,11 @@
 
 /* Results participate in the modal body scroll; avoid two nested scroll areas. */
 dialog.fm2-selection-modal .fm2-picker-results{max-block-size:none;max-height:none;overflow:visible}
+.fm2-object-comment{box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-inline-size:0;max-inline-size:100%;padding:22px;border:1px solid var(--fm2-border);border-radius:12px;background:#fff}
+.fm2-object-comment__heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;min-inline-size:0;max-inline-size:100%}
+.fm2-object-comment__heading>div,.fm2-object-comment__heading small{min-inline-size:0;overflow-wrap:anywhere}
+.fm2-object-comment__heading h2,.fm2-object-comment__heading p{margin:0}.fm2-object-comment__heading p,.fm2-object-comment__heading small,.fm2-object-comment__empty{color:var(--fm2-muted)}
+.fm2-object-comment__heading p{margin-block-start:4px}.fm2-object-comment__heading small{text-align:end}
+.fm2-object-comment__current{box-sizing:border-box;min-inline-size:0;max-inline-size:100%;padding:14px 16px;border-radius:8px;background:var(--fm2-filter);line-height:1.55;overflow-wrap:anywhere}
+.fm2-object-comment__empty{margin:0}.fm2-object-comment form{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-inline-size:0;max-inline-size:100%}.fm2-object-comment form>.shlz-field,.fm2-object-comment form .shlz-field__control,.fm2-object-comment__textarea{box-sizing:border-box;inline-size:100%;min-inline-size:0;max-inline-size:100%}.fm2-object-comment form .shlz-field__control{align-items:stretch;block-size:auto;min-block-size:120px;padding:10px 12px;overflow:visible}.fm2-object-comment__textarea{display:block;block-size:auto;min-block-size:120px;resize:vertical}.fm2-object-comment form>.fm2-problem{box-sizing:border-box;min-inline-size:0;max-inline-size:100%;overflow-wrap:anywhere}.fm2-object-comment form>.shlz-button{justify-self:start}
+@media(max-width:680px){.fm2-object-comment{padding:18px}.fm2-object-comment__heading{flex-direction:column;gap:8px}.fm2-object-comment__heading small{text-align:start}.fm2-object-comment form>.shlz-button{inline-size:100%}}

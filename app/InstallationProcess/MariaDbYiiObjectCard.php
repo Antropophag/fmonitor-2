@@ -33,7 +33,7 @@ final readonly class MariaDbYiiObjectCard
         try {
             $p = $this->prefix;
             $l = $this->legacyPrefix;
-            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,e.revision edit_revision,e.values_json edit_values,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_object_detail_edits` e ON e.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
+            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,e.revision edit_revision,e.values_json edit_values,ce.actor_display_snapshot comment_updated_by,DATE_FORMAT(ce.occurred_at_utc,'%Y-%m-%dT%H:%i:%sZ') comment_updated_at,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_object_detail_edits` e ON e.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_object_detail_edit_events` ce ON ce.event_id=(SELECT MAX(cx.event_id) FROM `{$p}fm2_object_detail_edit_events` cx WHERE cx.object_id=c.legacy_installation_object_id AND JSON_SEARCH(cx.changes_json,'one','comment',NULL,'$[*].field') IS NOT NULL) LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
             $rows = $this->db->createCommand($sql, [':object' => $objectId])->queryAll();
             if ($rows === []) {
                 return null;
@@ -94,6 +94,9 @@ final readonly class MariaDbYiiObjectCard
                 'hasPtoAct' => (bool) $row['has_pto'] || $this->optionalLegacyDate($row['ptoactdate']) !== null,
                 'technicalDocuments' => $this->documentLinks($row['zavnumber']),
                 'detailEditor'=>['revision'=>(int)($row['edit_revision']??0),'values'=>$edits],
+                'comment'=>is_string($edits['comment']??null)?$edits['comment']:null,
+                'commentUpdatedAt'=>$row['comment_updated_at']===null?null:(string)$row['comment_updated_at'],
+                'commentUpdatedBy'=>$row['comment_updated_by']===null?null:(string)$row['comment_updated_by'],
             ];
             return $this->projection->decorate($card, $actorId, (int) $row['case_id'], (string) $row['process_state'],$historyCursor);
         } catch (\DomainException | \RuntimeException $error) {

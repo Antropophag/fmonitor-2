@@ -276,6 +276,9 @@ db	php	tests/Yii2/yii2_object_card_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_stage_actions_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_stage_matrix_001_test.php	integration
+db	php	tests/Yii2/yii2_object_comments_20261030_test.php	integration
+db	php	tests/Yii2/yii2_object_comments_browser_20261030_test.php	e2e
+db	php	tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php	integration
 db	php	tests/Yii2/yii2_object_details_editing_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration

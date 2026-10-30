@@ -170,6 +170,17 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
         </section>
     </aside>
     <main class="fm2-object-workspace" aria-label="Монтажное дело">
+        <?php $commentValue=(string)($comment??'');$commentFormValue=(string)($commentEditor['value']??$commentValue);$commentError=$commentEditor['error']??null; ?>
+        <section class="fm2-object-comment" id="object-comment" aria-labelledby="object-comment-heading">
+            <div class="fm2-object-comment__heading"><div><h2 id="object-comment-heading">Комментарий</h2><p>Причина задержки или рабочая заметка по объекту.</p></div><?php if($commentUpdatedAt!==null): ?><small>Обновил: <?= Html::encode((string)($commentUpdatedBy??'Пользователь недоступен')) ?> · <time datetime="<?= Html::encode($commentUpdatedAt) ?>"><?= $date($commentUpdatedAt,true) ?></time> МСК</small><?php endif ?></div>
+            <?php if($commentValue!==''): ?><div class="fm2-object-comment__current" data-object-comment-current><?= nl2br(Html::encode($commentValue),false) ?></div><?php else: ?><p class="fm2-object-comment__empty" data-object-comment-current>Комментарий пока не добавлен.</p><?php endif ?>
+            <?php if(($commentEditor['allowed']??false)===true): ?><form method="post" action="/pilot/objects/<?= (int)$id ?>/details" data-object-comment-form>
+                <?= Html::hiddenInput('_csrf',$csrf) ?><?= Html::hiddenInput('requestId',ViewSupport::uuid()) ?><?= Html::hiddenInput('expectedRevision',(int)$detailEditor['revision']) ?>
+                <?php if($commentError!==null): ?><p class="fm2-problem" id="object-comment-error" role="alert"><?= Html::encode($commentError) ?></p><?php endif ?>
+                <label class="shlz-field shlz-field--textarea"><span class="shlz-field__label">Комментарий</span><span class="shlz-field__control"><textarea class="shlz-textarea fm2-object-comment__textarea" name="comment" rows="5" maxlength="2000" placeholder="Укажите причину задержки или рабочую заметку"<?= $commentError!==null?' aria-invalid="true" aria-describedby="object-comment-error"':'' ?>><?= Html::encode($commentFormValue) ?></textarea></span><span class="shlz-field__secondary">До 2000 символов. Пустое значение удалит текущий комментарий.</span></label>
+                <button class="shlz-button shlz-button--primary" type="submit">Сохранить комментарий</button>
+            </form><?php endif ?>
+        </section>
         <?php if ($status === 'Требуется изменение'): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">
                 <div><h2 id="next-action-heading">Требуется изменение</h2><p>Подготовьте новый состав распоряжения для дальнейшей работы.</p></div>

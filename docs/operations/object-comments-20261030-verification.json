@@ -1,0 +1,42 @@
+{
+  "change": "object-comments-20261030",
+  "planned_paths": [
+    "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
+    "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Assets/preopening.css",
+    "app/YiiRuntime/Assets/pilot.css",
+    "specs/OBJECT-COMMENTS-20261030.md",
+    "docs/operations/object-comments-20261030.md",
+    "docs/operations/object-comments-20261030-verification.json",
+    "tools/verification/suites.tsv",
+    "reviews/code/OBJECT-COMMENTS-20261030.md",
+    "tests/Yii2/object_comments_20261030_browser.mjs",
+    "tests/Yii2/yii2_object_comments_20261030_test.php",
+    "tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php",
+    "tests/Yii2/yii2_object_comments_browser_20261030_test.php",
+    "tests/InstallationProcess/object_details_editing_001_test.php",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-COMMENTS-20261030",
+      "acceptance_id": "comment-public-seam",
+      "spec_path": "specs/OBJECT-COMMENTS-20261030.md",
+      "seam": "ObjectDetailsEditApplication and realYii HTTP/browser",
+      "tests": [
+        "tests/Yii2/yii2_object_comments_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_browser_20261030_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_object_comments_20261030_test.php": "GREEN",
+        "tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php": "GREEN",
+        "tests/Yii2/yii2_object_comments_browser_20261030_test.php": "GREEN"
+      }
+    }
+  ]
+}

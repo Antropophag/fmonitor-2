@@ -2346,3 +2346,5 @@ body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-segment__input{inlin
 
 .fm2-queue-progress { font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (min-width: 681px) { .fm2-queue-table .fm2-queue-progress { inline-size: 58px; padding-inline: 8px; text-align: right; } }
+.fm2-queue-table .fm2-queue-comment{inline-size:220px;max-inline-size:220px}.fm2-queue-comment a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:680px){.fm2-queue-table .fm2-queue-comment{inline-size:auto;max-inline-size:none}.fm2-queue-comment a{white-space:normal}}

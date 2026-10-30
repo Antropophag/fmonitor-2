@@ -18,6 +18,7 @@ use FMonitor2\InstallationProcess\{ObjectDetailsEditCommand,ObjectDetailsFieldRe
 final class ObjectCardController extends PreopeningController
 {
     private ?array $detailsValidation=null;
+    private ?array $commentValidation=null;
     private ?array $completionFormState=null;
     public function beforeAction($action):bool { if(in_array($action->id,['assignment','details'],true))$this->enableCsrfValidation=false;return parent::beforeAction($action); }
     public function behaviors(): array
@@ -41,7 +42,9 @@ final class ObjectCardController extends PreopeningController
             )->read($this->actor(), $id,is_string(Yii::$app->request->get('history'))?Yii::$app->request->get('history'):null);
             if ($card === null) return $this->status(404);
             $card['detailEditor']['allowed']=$this->processCap('objects.details.edit');
+            $card['commentEditor']=['allowed'=>$card['detailEditor']['allowed']];
             if($this->detailsValidation!==null){$card['detailEditor']['values']=$this->detailsValidation['values'];$card['detailEditor']['errors']=$this->detailsValidation['errors'];$card['detailEditor']['open']=true;}
+            if($this->commentValidation!==null)$card['commentEditor']+=$this->commentValidation;
             $card = $this->withCurrentInstallerStatuses($card);
             $documentAccess = $this->documentAccess($id);
             if ($documentAccess['status'] === 'unavailable') return $this->status(503, true);
@@ -143,9 +146,11 @@ final class ObjectCardController extends PreopeningController
         if(preg_match('~^application/x-www-form-urlencoded(?:\s*;\s*charset=utf-8)?$~iD',(string)Yii::$app->request->contentType)!==1)return$this->status(415);
         $body=Yii::$app->request->rawBody;if(strlen($body)>32768)return$this->status(413);$wireKeys=[];foreach(explode('&',$body)as$pair){$key=rawurldecode(str_replace('+',' ',explode('=',$pair,2)[0]));if($key===''||str_contains($key,'[')||isset($wireKeys[$key]))return$this->status(400);$wireKeys[$key]=true;}parse_str($body,$fields);if(!Yii::$app->request->validateCsrfToken((string)($fields['_csrf']??'')))return$this->status(400);
         $meta=['_csrf','requestId','expectedRevision'];$patch=array_diff_key($fields,array_flip($meta));foreach(['floors','weight','speed','pittype','pitmaterial','lift_type','paired']as$key)if(($patch[$key]??null)==='')unset($patch[$key]);if(array_diff($meta,array_keys($fields))!==[])return$this->status(400);
-        try{$expected=filter_var($fields['expectedRevision'],FILTER_VALIDATE_INT,['options'=>['min_range'=>0]]);if($expected===false)throw new \InvalidArgumentException();$registry=new ObjectDetailsFieldRegistry();$definitions=$registry->definitions();$errors=[];foreach($patch as$field=>$value){try{$registry->normalizePatch([$field=>$value]);}catch(\InvalidArgumentException){$errors[isset($definitions[$field])?$field:'_form']='Некорректное значение. Проверьте поле.';}}if($errors!==[])return$this->detailsValidation($id,$patch,$errors);$command=new ObjectDetailsEditCommand((string)$fields['requestId'],$id,$this->actor(),(int)$expected,$patch);
+        $commentOnly=count($fields)===4&&array_diff(array_keys($fields),['_csrf','requestId','expectedRevision','comment'])===[];
+        try{$expected=filter_var($fields['expectedRevision'],FILTER_VALIDATE_INT,['options'=>['min_range'=>0]]);if($expected===false)throw new \InvalidArgumentException();$registry=new ObjectDetailsFieldRegistry();$definitions=$registry->definitions();$errors=[];foreach($patch as$field=>$value){try{$registry->normalizePatch([$field=>$value]);}catch(\InvalidArgumentException){$errors[isset($definitions[$field])?$field:'_form']=$field==='comment'?'Введите не более 2000 символов без служебных знаков.':'Некорректное значение. Проверьте поле.';}}if($errors!==[])return$commentOnly?$this->commentValidation($id,(string)($patch['comment']??''),$errors['comment']??$errors['_form'],422):$this->detailsValidation($id,$patch,$errors);$command=new ObjectDetailsEditCommand((string)$fields['requestId'],$id,$this->actor(),(int)$expected,$patch);
             $resources=new PreopeningResources(Yii::$app->db);try{$result=$resources->editObjectDetails($command);}finally{$resources->close();}
         }catch(\InvalidArgumentException){return$this->status(400);}catch(\Throwable){return$this->status(503,true);}
+        if($commentOnly)return match($result['status']){'applied','replayed','noop'=>$this->redirect303('/pilot/objects/'.$id.'#object-comment'),'invalid'=>$this->commentValidation($id,(string)($patch['comment']??''),'Проверьте введённый комментарий.',422),'rejected'=>$this->status(403),'conflict'=>$this->commentValidation($id,(string)($patch['comment']??''),'Данные объекта изменились. Сверьте текущий комментарий и повторите сохранение.',409),default=>$this->status(503,true)};
         return match($result['status']){'applied','replayed','noop'=>$this->redirect303('/pilot/objects/'.$id.'#history'),'invalid'=>$this->detailsValidation($id,$patch,['_form'=>'Проверьте введённые значения.']),'rejected'=>$this->status(403),'conflict'=>$this->status(409),default=>$this->status(503,true)};
     }
     public function actionDetailsMethod(string$id):Response{return$this->canonicalId($id)===null?$this->status(404):$this->methodNotAllowed('POST');}
@@ -153,6 +158,10 @@ final class ObjectCardController extends PreopeningController
     private function detailsValidation(int$id,array$values,array$errors):string|Response
     {
         $this->detailsValidation=['values'=>$values,'errors'=>$errors];Yii::$app->response->statusCode=422;return$this->actionView((string)$id);
+    }
+    private function commentValidation(int$id,string$value,string$error,int$status):string|Response
+    {
+        $this->commentValidation=['value'=>$value,'error'=>$error];Yii::$app->response->statusCode=$status;return$this->actionView((string)$id);
     }
 
     private function documentAccess(int $id): array
