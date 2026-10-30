@@ -1,0 +1,26 @@
+{
+  "change": "object-table-spacing-20261030",
+  "planned_paths": [
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "tests/Yii2/yii2_object_queue_001_test.php",
+    "docs/operations/object-table-spacing-20261030.md",
+    "docs/operations/object-table-spacing-20261030-verification.json",
+    "reviews/code/OBJECT-TABLE-SPACING-20261030.md",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-TABLE-SPACING-20261030",
+      "acceptance_id": "queue-presentation",
+      "spec_path": "docs/operations/object-table-spacing-20261030.md",
+      "seam": "realYii queue GET",
+      "tests": [
+        "tests/Yii2/yii2_object_queue_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_object_queue_001_test.php": "GREEN"
+      }
+    }
+  ]
+}
