@@ -1,0 +1,22 @@
+{
+  "change": "template-download-20261030",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/AssignmentOrderTemplateController.php",
+    "app/YiiRuntime/Views/selection.php",
+    "tests/Yii2/preopening_browser.mjs",
+    "docs/operations/template-download-20261030.md",
+    "docs/operations/template-download-20261030-verification.json",
+    "reviews/code/TEMPLATE-DOWNLOAD-20261030.md",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "TEMPLATE-DOWNLOAD-20261030",
+      "acceptance_id": "post-download",
+      "spec_path": "docs/operations/template-download-20261030.md",
+      "seam": "real Yii template POST and browser download",
+      "tests": ["tests/Yii2/yii2_preopening_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_preopening_browser_001_test.php": "GREEN"}
+    }
+  ]
+}

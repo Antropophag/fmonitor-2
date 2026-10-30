@@ -35,7 +35,7 @@ final class AssignmentOrderTemplateController extends PreopeningController
             $response = Yii::$app->response;
             $response->format = Response::FORMAT_RAW; $response->statusCode = 200;
             $response->headers->set('Content-Type', 'application/pdf');
-            $response->headers->set('Content-Disposition', 'inline; filename="assignment-order.pdf"');
+            $response->headers->set('Content-Disposition', 'attachment; filename="assignment-order.pdf"');
             $response->headers->set('Content-Length', (string) strlen($bytes));
             $response->content = $bytes;
             return $response;
