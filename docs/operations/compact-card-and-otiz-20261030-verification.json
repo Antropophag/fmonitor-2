@@ -1,0 +1,41 @@
+{
+  "change": "compact-card-and-otiz-20261030",
+  "planned_paths": [
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Assets/preopening.css",
+    "app/YiiRuntime/Assets/preopening.js",
+    "app/YiiRuntime/Views/_otiz-v2-group-table.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/InstallationProcess/MariaDbYiiObjectQueueProjection.php",
+    "app/Otiz/MariaDbOtizPortfolioEconomy.php",
+    "app/YiiRuntime/Views/otiz-economy-v2.php",
+    "app/YiiRuntime/Views/objects.php",
+    "docs/operations/compact-card-and-otiz-20261030.md",
+    "docs/operations/compact-card-and-otiz-20261030-verification.json",
+    "reviews/code/COMPACT-CARD-AND-PAGINATION-20261030.md",
+    "tests/Yii2/yii2_otiz_installer_count_20261030_test.php",
+    "tests/Yii2/object_comments_20261030_browser.mjs",
+    "tests/Yii2/yii2_otiz_feedback_queue_20261029_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "COMPACT-CARD-AND-OTIZ-20261030",
+      "acceptance_id": "ui-and-count",
+      "spec_path": "docs/operations/compact-card-and-otiz-20261030.md",
+      "seam": "Yii HTTP/read models/browser",
+      "tests": [
+        "tests/Yii2/yii2_otiz_installer_count_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_browser_20261030_test.php",
+        "tests/Yii2/deadline_transfer_certificate_http_001_test.php",
+        "tests/Yii2/yii2_otiz_filters_decisions_20261029_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_otiz_installer_count_20261030_test.php": "GREEN",
+        "tests/Yii2/yii2_object_comments_browser_20261030_test.php": "GREEN",
+        "tests/Yii2/deadline_transfer_certificate_http_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_filters_decisions_20261029_test.php": "GREEN"
+      }
+    }
+  ]
+}

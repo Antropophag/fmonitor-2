@@ -2322,7 +2322,7 @@ body.shlz-scope .fm2-shell [data-otiz-v2-calculation] .shlz-segment__input{inlin
 [data-otiz-v2-calculation] .fm2-otiz-v2-page-size{display:flex;align-items:center;gap:10px;flex:0 0 auto;margin:0}
 [data-otiz-v2-calculation] .fm2-otiz-v2-page-size label{color:var(--fm2-muted);font-size:13px;white-space:nowrap}
 [data-otiz-v2-calculation] .fm2-otiz-v2-page-size .shlz-field__control{inline-size:78px;block-size:40px}
-[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation{display:flex;align-items:center;justify-content:flex-end;min-inline-size:0;color:var(--fm2-muted);font-size:13px}
+[data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation{display:flex;align-items:center;justify-content:flex-start;min-inline-size:0;color:var(--fm2-muted);font-size:13px}
 [data-otiz-v2-calculation] .fm2-otiz-v2-page-navigation>.shlz-pagination__summary{white-space:nowrap}
 [data-otiz-v2-calculation] dialog.fm2-otiz-v2-decisions-dialog>.shlz-modal__surface{padding:0;overflow:hidden}
 [data-otiz-v2-calculation] .fm2-otiz-v2-decisions-dialog .shlz-modal__header{padding:20px 24px 14px}

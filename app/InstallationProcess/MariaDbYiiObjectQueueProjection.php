@@ -45,9 +45,12 @@ final readonly class MariaDbYiiObjectQueueProjection
         }
         return$objects;
     }
-    /** @param list<int|string> $caseIds @return array<int,int> */
-    private function installerCounts(array $caseIds): array
+    /** @param list<int|string> $caseIds @return array<int,int> Counts keyed by installation case ID. */
+    public function installerCounts(array $caseIds): array
     {
+        if ($caseIds === []) {
+            return [];
+        }
         [$marks, $params] = $this->parameters($caseIds);
         $applications = $this->db->createCommand(
             "SELECT a.* FROM `{$this->prefix}fm2_assignment_order_applications` a "

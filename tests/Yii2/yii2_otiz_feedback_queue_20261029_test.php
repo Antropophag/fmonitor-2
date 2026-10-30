@@ -49,6 +49,6 @@ try {
     $dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$page['body']);$xp=new DOMXPath($dom);
     $cell=$xp->query('//*[@data-completion-progress]')->item(0);
     assertSameValue('7%',trim($cell?->textContent??''),'HTTP shows known progress instead of dash');
-    assertSameValue(true,str_contains($page['body'],'Монтажников'),'HTTP team count column');
+    assertSameValue(false,str_contains($page['body'],'data-label="Монтажников"'),'team count belongs to OTIZ, not general queue');
     echo "PASS: OTIZ feedback queue filters, progress, team and read-only behavior\n";
 } finally {if($f instanceof ObjectQueueFixture)$f->close();}

@@ -168,19 +168,24 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                 <div class="fm2-problem" role="status"><strong>Карточка технических данных <?= $objectDetailsStatus === 'corrupt' ? 'повреждена' : 'недоступна' ?></strong><span>Работа с объектом остаётся доступна.</span></div>
             <?php endif ?>
         </section>
-    </aside>
-    <main class="fm2-object-workspace" aria-label="Монтажное дело">
-        <?php $commentValue=(string)($comment??'');$commentFormValue=(string)($commentEditor['value']??$commentValue);$commentError=$commentEditor['error']??null; ?>
-        <section class="fm2-object-comment" id="object-comment" aria-labelledby="object-comment-heading">
-            <div class="fm2-object-comment__heading"><div><h2 id="object-comment-heading">Комментарий</h2><p>Причина задержки или рабочая заметка по объекту.</p></div><?php if($commentUpdatedAt!==null): ?><small>Обновил: <?= Html::encode((string)($commentUpdatedBy??'Пользователь недоступен')) ?> · <time datetime="<?= Html::encode($commentUpdatedAt) ?>"><?= $date($commentUpdatedAt,true) ?></time> МСК</small><?php endif ?></div>
-            <?php if($commentValue!==''): ?><div class="fm2-object-comment__current" data-object-comment-current><?= nl2br(Html::encode($commentValue),false) ?></div><?php else: ?><p class="fm2-object-comment__empty" data-object-comment-current>Комментарий пока не добавлен.</p><?php endif ?>
+        <?php $commentValue=(string)($comment??'');$commentFormValue=(string)($commentEditor['value']??$commentValue);$commentError=$commentEditor['error']??null;$canEditComment=($commentEditor['allowed']??false)===true; ?>
+        <?php if($commentValue!==''||$canEditComment): ?>
+        <details class="fm2-object-comment" id="object-comment"<?= $commentError!==null?' open':'' ?>>
+            <summary><span class="fm2-object-comment__summary-title"><?= $commentValue!==''?'Комментарий':'Добавить комментарий' ?><?php if($commentValue!==''): ?><small><?= $canEditComment?'Изменить':'Подробнее' ?></small><?php endif ?></span><?php if($commentValue!==''): ?><span class="fm2-object-comment__excerpt"><?= Html::encode(mb_substr($commentValue,0,160).(mb_strlen($commentValue)>160?'…':'')) ?></span><?php endif ?></summary>
+            <div class="fm2-object-comment__body">
+            <?php if($commentValue!==''): ?><div class="fm2-object-comment__current" data-object-comment-current><?= nl2br(Html::encode($commentValue),false) ?></div><?php endif ?>
+            <?php if(($commentUpdatedAt??null)!==null): ?><small class="fm2-object-comment__meta">Обновил: <?= Html::encode((string)($commentUpdatedBy??'Пользователь недоступен')) ?> · <time datetime="<?= Html::encode($commentUpdatedAt) ?>"><?= $date($commentUpdatedAt,true) ?></time> МСК</small><?php endif ?>
             <?php if(($commentEditor['allowed']??false)===true): ?><form method="post" action="/pilot/objects/<?= (int)$id ?>/details" data-object-comment-form>
                 <?= Html::hiddenInput('_csrf',$csrf) ?><?= Html::hiddenInput('requestId',ViewSupport::uuid()) ?><?= Html::hiddenInput('expectedRevision',(int)$detailEditor['revision']) ?>
                 <?php if($commentError!==null): ?><p class="fm2-problem" id="object-comment-error" role="alert"><?= Html::encode($commentError) ?></p><?php endif ?>
                 <label class="shlz-field shlz-field--textarea"><span class="shlz-field__label">Комментарий</span><span class="shlz-field__control"><textarea class="shlz-textarea fm2-object-comment__textarea" name="comment" rows="5" maxlength="2000" placeholder="Укажите причину задержки или рабочую заметку"<?= $commentError!==null?' aria-invalid="true" aria-describedby="object-comment-error"':'' ?>><?= Html::encode($commentFormValue) ?></textarea></span><span class="shlz-field__secondary">До 2000 символов. Пустое значение удалит текущий комментарий.</span></label>
                 <button class="shlz-button shlz-button--primary" type="submit">Сохранить комментарий</button>
             </form><?php endif ?>
-        </section>
+            </div>
+        </details>
+        <?php endif ?>
+    </aside>
+    <main class="fm2-object-workspace" aria-label="Монтажное дело">
         <?php if ($status === 'Требуется изменение'): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">
                 <div><h2 id="next-action-heading">Требуется изменение</h2><p>Подготовьте новый состав распоряжения для дальнейшей работы.</p></div>
@@ -241,12 +246,10 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                     <h2>Сроки монтажа</h2>
                     <dl class="fm2-fact-grid">
                         <div class="fm2-fact"><dt>Плановое начало</dt><dd><?= $plannedStartDate ? '<time datetime="' . Html::encode($plannedStartDate) . '">' . $date($plannedStartDate) . '</time>' : 'Неизвестно' ?></dd></div>
-                        <div class="fm2-fact"><dt>Плановое завершение</dt><dd><?= $plannedFinishDate ? '<time datetime="' . Html::encode($plannedFinishDate) . '">' . $date($plannedFinishDate) . '</time>' : 'Неизвестно' ?></dd></div>
+                        <div class="fm2-fact"><dt>Плановое завершение</dt><dd><?= $plannedFinishDate ? '<time datetime="' . Html::encode($plannedFinishDate) . '">' . $date($plannedFinishDate) . '</time>' : 'Неизвестно' ?><?php if ($canReadDeadlineCertificate): ?><div class="fm2-finish-certificate"><span>Срок для расчёта ОТИЗ по справке</span><div><?php if ($deadlineCertificate !== null): ?><time datetime="<?= Html::encode($deadlineCertificate['newDeadline']) ?>"><?= $date($deadlineCertificate['newDeadline']) ?></time> · <a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates/<?= (int) $deadlineCertificate['id'] ?>/pdf">Справка, редакция <?= (int) $deadlineCertificate['revisionNumber'] ?></a><?php else: ?>Справка отсутствует<?php endif ?></div></div><div class="fm2-workspace-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates">Справки о переносе срока</a></div><?php endif ?></dd></div>
                         <?php if ($opened): ?><div class="fm2-fact"><dt>Фактическое начало</dt><dd><time datetime="<?= Html::encode($actualStartDate) ?>"><?= $date($actualStartDate) ?></time></dd></div><?php endif ?>
                         <div class="fm2-fact"><dt>Актуальная дата ПТО</dt><dd><?= $completion['pto_act'] !== null ? '<time datetime="' . Html::encode($completion['pto_act']['date']) . '">' . $date($completion['pto_act']['date']) . '</time>' : 'Не указана' ?></dd></div>
-                        <?php if ($canReadDeadlineCertificate): ?><div class="fm2-fact"><dt>Срок для расчёта ОТИЗ по справке</dt><dd><?php if ($deadlineCertificate !== null): ?><time datetime="<?= Html::encode($deadlineCertificate['newDeadline']) ?>"><?= $date($deadlineCertificate['newDeadline']) ?></time> · <a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates/<?= (int) $deadlineCertificate['id'] ?>/pdf">Справка, редакция <?= (int) $deadlineCertificate['revisionNumber'] ?></a><?php else: ?>Справка отсутствует<?php endif ?></dd></div><?php endif ?>
                     </dl>
-                    <?php if ($canReadDeadlineCertificate): ?><div class="fm2-workspace-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates">Справки о переносе срока</a></div><?php endif ?>
                 </div>
                 <div class="fm2-tab-section">
                     <h2>Готовность</h2>
