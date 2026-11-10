@@ -526,6 +526,7 @@
       "verifiers": [
         "tests/InstallationProcess/invitation_reissue_http_001_test.php",
         "tests/InstallationProcess/legacy_control_engineer_http_001_test.php",
+        "tests/Yii2/yii2_activation_password_20261029_test.php",
         "tests/Yii2/yii2_user_access_edges_001_test.php"
       ],
       "consumers": []
@@ -628,6 +629,8 @@
       ],
       "verifiers": [
         "tests/Otiz/native_admission_001_test.php",
+        "tests/Otiz/monthly_totals_20261029_test.php",
+        "tests/Otiz/report_filters_20261029_test.php",
         "tests/Otiz/settlement_v2_001_test.php",
         "tests/Otiz/settlement_v2_db_001_test.php",
         "tests/Otiz/settlement_v2_workbook_001_test.php",
@@ -775,6 +778,9 @@
       ],
       "verifiers": [
         "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
+        "tests/Yii2/yii2_object_comments_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_browser_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php",
         "tests/Yii2/yii2_object_card_001_test.php",
         "tests/Yii2/yii2_object_details_editing_001_test.php"
       ],

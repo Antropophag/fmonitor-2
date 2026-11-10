@@ -7,6 +7,8 @@ const { chromium } = require(moduleRoot);
 const base = `http://127.0.0.1:${port}`;
 const output = { errors: [], requestFailures: [], downloads: 0 };
 const pageActions = new WeakMap();
+let templateDownloadRequestUrl = null;
+let templateNavigationAborts = 0;
 
 async function fillDate(page, name, iso) {
   const hidden = page.locator(`.shlz-date-picker input[type="hidden"][name="${name}"]`);
@@ -28,12 +30,15 @@ function monitor(page, pageName) {
   page.on('requestfailed', request => {
     const errorText = request.failure()?.errorText || '';
     const action = pageActions.get(page) || null;
-    const expectedInlinePdfAbort = errorText === 'net::ERR_ABORTED'
-      && request.method() === 'GET'
-      && request.resourceType() === 'other'
-      && pageName === 'template-popup'
-      && action === 'template-popup-load';
-    if (expectedInlinePdfAbort) return;
+    const templateDownloadAbort = errorText === 'net::ERR_ABORTED'
+      && request.method() === 'POST'
+      && request.resourceType() === 'document'
+      && pageName === 'owner'
+      && action === 'template-download'
+      && request.url() === templateDownloadRequestUrl;
+    // Chromium cancels a document navigation when its validated response becomes a download.
+    // This exact request is accepted only by the PDF-byte/download assertions below.
+    if (templateDownloadAbort) { templateNavigationAborts += 1; return; }
     output.errors.push(errorText);
     try {
       if (output.requestFailures.length >= 20) return;
@@ -88,38 +93,45 @@ async function selectComposition(page) {
   await page.waitForLoadState('domcontentloaded');
 }
 
-async function verifyInlineTemplate(page, context) {
+async function verifyTemplateDownload(page, context) {
   let captured = null;
-  const templatePattern = /\/assignment-orders\/\d+\/template$/;
+  const button = page.getByRole('button', { name: 'Сформировать шаблон', exact: true });
+  templateDownloadRequestUrl = await button.evaluate(element => element.form.action);
+  const originalUrl = page.url(), pageCount = context.pages().length, methods = [];
+  const observe = request => { if (request.url() === templateDownloadRequestUrl) methods.push(request.method()); };
+  context.on('request', observe);
   await context.route('**/assignment-orders/*/template', async route => {
-    if (route.request().method() !== 'POST' || !templatePattern.test(new URL(route.request().url()).pathname)) return route.continue();
+    if (route.request().url() !== templateDownloadRequestUrl || route.request().method() !== 'POST') return route.continue();
     const response = await route.fetch();
     const bytes = await response.body();
     captured = { status: response.status(), headers: response.headers(), bytes };
     await route.fulfill({ response, body: bytes });
   });
-  const popupPromise = page.waitForEvent('popup');
-  markAction(page, 'template-popup-open');
-  await page.getByRole('button', { name: 'Сформировать шаблон', exact: true }).click();
-  const popup = await popupPromise;
-  monitor(popup, 'template-popup');
-  markAction(popup, 'template-popup-load');
-  await popup.waitForURL(/\/assignment-orders\/\d+\/template$/);
-  await page.waitForTimeout(300);
-  await context.unroute('**/assignment-orders/*/template');
-  if (!captured) throw new Error('Template PDF response was not observed');
-  const { status, headers, bytes } = captured;
-  if (status !== 200 || headers['content-type'] !== 'application/pdf') throw new Error('Template response is not PDF 200');
-  if (!headers['content-disposition']?.startsWith('inline;')) throw new Error('Template response is not inline');
-  if (bytes.length === 0 || bytes.subarray(0, 5).toString() !== '%PDF-') throw new Error(`Template PDF bytes are invalid length=${bytes.length} first8=${bytes.subarray(0, 8).toString('hex')}`);
-  if (headers['content-length'] !== String(bytes.length)) throw new Error('Template PDF length header mismatch');
-  if (output.downloads !== 0) throw new Error('Template triggered a download');
-  output.templateBytes = bytes.length;
-  output.templateSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
-  fs.writeFileSync(path.join(artifactRoot, 'template.pdf'), bytes, { mode: 0o600 });
-  markAction(popup, 'template-popup-close');
-  await popup.close();
-  markAction(page, 'template-popup-closed');
+  try {
+    markAction(page, 'template-download');
+    const [download] = await Promise.all([page.waitForEvent('download'), button.click()]);
+    const downloaded = fs.readFileSync(await download.path());
+    await waitObserved(() => captured !== null, 'Template response');
+    await page.waitForLoadState('networkidle');
+    const { status, headers, bytes } = captured;
+    if (status !== 200 || headers['content-type'] !== 'application/pdf') throw new Error('Template response is not PDF 200');
+    if (!headers['content-disposition']?.startsWith('attachment;')) throw new Error('Template is not an attachment');
+    if (download.suggestedFilename() !== 'assignment-order.pdf') throw new Error('Unexpected template filename');
+    if (bytes.length === 0 || bytes.subarray(0, 5).toString() !== '%PDF-' || !downloaded.equals(bytes)) throw new Error('Downloaded PDF differs from actual response');
+    if (headers['content-length'] !== String(bytes.length)) throw new Error('Template PDF length header mismatch');
+    if (output.downloads !== 1 || templateNavigationAborts > 1) throw new Error('Template download must happen exactly once');
+    if (JSON.stringify(methods) !== JSON.stringify(['POST'])) throw new Error('Template caused a duplicate request or GET retry');
+    if (context.pages().length !== pageCount || page.url() !== originalUrl) throw new Error('Template left selection page or opened a blank tab');
+    output.templateBytes = bytes.length;
+    output.templateSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    output.templateNavigationAborts = templateNavigationAborts;
+    fs.writeFileSync(path.join(artifactRoot, 'template.pdf'), downloaded, { mode: 0o600 });
+  } finally {
+    await context.unroute('**/assignment-orders/*/template');
+    context.off('request', observe);
+    templateDownloadRequestUrl = null;
+    markAction(page, 'template-download-finished');
+  }
 }
 
 async function uploadAndCorrect(page) {
@@ -260,7 +272,7 @@ async function completeDocuments(ownerPage) {
     await ownerPage.goto(`${base}/pilot/objects?q=4512`);
     await ownerPage.locator('a[href="/pilot/objects/4512"]').click();
     await selectComposition(ownerPage);
-    await verifyInlineTemplate(ownerPage, ownerContext);
+    await verifyTemplateDownload(ownerPage, ownerContext);
     await uploadAndCorrect(ownerPage);
     await verifyOriginalDownload(ownerPage, ownerContext);
     await openAsDistinctActor(browser);

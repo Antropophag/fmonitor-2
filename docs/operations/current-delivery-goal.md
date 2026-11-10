@@ -6,6 +6,8 @@
 
 Контракт: [PRODUCTION-RECONCILIATION-20261110](../../specs/PRODUCTION-RECONCILIATION-20261110.md). Primary capture/logs находятся вне Git: `~/.local/share/fmonitor-2/reconcile-production-20261110/`. Полный локальный `make test`/`make verify` запрещён. Локально — bounded focused checks, полный matrix — существующий Quality Graph consumer. UNKNOWN не означает GREEN/допуск.
 
+Сверка1000runtime-файлов закрыта;26focused проверок и независимые ретроспективное тестовое/итоговое ревью пройдены. Legacy Gate3 preimplementation packager для уже реализованного all-GREEN candidate не применяется автоматически; ограничение и исторические RED зафиксированы в delivery record. Дальше — PR и полный exact-source CI.
+
 Предыдущая очередь сохранена ниже как история и не определяет scope нового поручения.
 
 ---
