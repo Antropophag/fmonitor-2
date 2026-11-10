@@ -1,0 +1,11 @@
+<?php
+declare(strict_types=1);require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/ObjectQueueFixture.php';
+$f=new ObjectQueueFixture(dirname(__DIR__,2));try{
+ $q=$f->queue();$first=$q->read(9101,'451201','',1)['objects'][0];assertSameValue('2026-09-01',$first['actualStartDate']??null,'INTENDED_RED actual start comes from recorded opening');assertSameValue(null,$first['actualFinishDate']??null,'no PTO means unknown actual finish');
+ $f->object(451202,6102,'needs_assignment_order');$pending=$q->read(9101,'451202','',1)['objects'][0];assertSameValue(null,$pending['actualStartDate']??null,'planned date cannot substitute unknown start');
+ $f->completion(6101,'pto_act');$f->completion(6101,'declaration');$f->db->query("UPDATE {$f->p}fm2_pilot_completion_facts SET fact_date='2026-12-31' WHERE installation_case_id=6101 AND fact_type='declaration'");$root=(int)$f->db->query("SELECT id FROM {$f->p}fm2_pilot_completion_facts WHERE installation_case_id=6101 AND fact_type='pto_act'")->fetch_column();
+ $f->insert($f->p.'fm2_pilot_completion_fact_corrections',['root_fact_id'=>$root,'version_no'=>1,'previous_correction_id'=>null,'previous_version_no'=>null,'fact_date'=>'2026-09-08','details'=>null,'reason'=>'Уточнена дата акта','recorded_at'=>'2026-10-30T08:00:00+03:00','recorded_by_user_id'=>9101]);
+ $before=$f->facts();$done=$q->read(9101,'451201','',1)['objects'][0];assertSameValue('2026-09-08',$done['actualFinishDate']??null,'latest PTO version, not maximum date or declaration');assertSameValue($before,$f->facts(),'dates are read-only');
+ $f->http->start();$cookies=[];$f->http->login($cookies);$page=$f->http->request('GET','/pilot/objects?q=451201',[],$cookies);assertSameValue(200,$page['status'],'facts HTTP page');$dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$page['body']);$xp=new DOMXPath($dom);$fact=$xp->query('//*[@data-label="Факт"]')->item(0);assertSameValue(true,$fact!==null,'Fact column exists');assertSameValue(true,str_contains($fact->textContent,'2026-09-01')&&str_contains($fact->textContent,'2026-09-08'),'actual dates visible');assertSameValue(false,str_contains($fact->textContent,'2026-12-31'),'declaration not used');
+ echo "PASS: object fact dates use real opening and latest corrected PTO, unknowns preserved\n";
+}finally{$f->close();}

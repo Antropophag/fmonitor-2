@@ -18,6 +18,7 @@ final readonly class MariaDbYiiObjectQueueProjection
             return[];
         }
         [$marks,$params] = $this->parameters(array_column($objects, 'caseId'));
+        $completionDates = $this->completionDates($marks, $params);
         $operations = $this->db->createCommand("SELECT installation_case_id,item_id,operation_type FROM `{$this->prefix}fm2_checklist_operations` WHERE installation_case_id IN({$marks}) AND operation_type IN('item_completed','completion_retracted') ORDER BY installation_case_id,item_id,accepted_revision,id", $params)->queryAll();
         $latest = [];
         foreach ($operations as $row) {
@@ -32,6 +33,7 @@ final readonly class MariaDbYiiObjectQueueProjection
         $prepare = $this->can($actor, 'assignment_order.prepare') || $this->can($actor, 'assignment_order.confirm_registration');
         $open = $this->can($actor, 'installation.open');
         foreach ($objects as &$object) {
+            $object['actualFinishDate'] = $completionDates[(int) $object['caseId']] ?? null;
             $object['installerCount'] = $installerCounts[(int) $object['caseId']] ?? 0;
             if ($object['status'] === 'Требуется распоряжение' && $prepare) {
                 $object['nextStep'] = 'Загрузить оригинал распоряжения';
@@ -44,6 +46,29 @@ final readonly class MariaDbYiiObjectQueueProjection
             }
         }
         return$objects;
+    }
+    /** @param array<string,int> $params @return array<int,string> */
+    private function completionDates(string $marks, array $params): array
+    {
+        $p = $this->prefix;
+        $rows = $this->db->createCommand(
+            "SELECT f.installation_case_id,COALESCE(c.fact_date,f.fact_date) fact_date "
+            . "FROM `{$p}fm2_pilot_completion_facts` f "
+            . "LEFT JOIN `{$p}fm2_pilot_completion_fact_corrections` c ON c.root_fact_id=f.id "
+            . "AND c.version_no=(SELECT MAX(x.version_no) FROM `{$p}fm2_pilot_completion_fact_corrections` x WHERE x.root_fact_id=f.id) "
+            . "WHERE f.installation_case_id IN({$marks}) AND f.fact_type='pto_act' ORDER BY f.installation_case_id,f.id",
+            $params,
+        )->queryAll();
+        $dates = [];
+        foreach ($rows as $row) {
+            $caseId = (int) $row['installation_case_id'];
+            $date = (string) $row['fact_date'];
+            if (isset($dates[$caseId]) || preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) !== 1) {
+                throw new \RuntimeException('Malformed PTO completion facts.');
+            }
+            $dates[$caseId] = $date;
+        }
+        return $dates;
     }
     /** @param list<int|string> $caseIds @return array<int,int> Counts keyed by installation case ID. */
     public function installerCounts(array $caseIds): array
