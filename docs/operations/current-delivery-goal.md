@@ -1,3 +1,15 @@
+# Текущая цель — провести production-изменения через Git и CI
+
+Поручение владельца 2026-11-10: собрать все фактически работающие production-изменения в Git, дополнить тесты, пройти независимые ревью и полный exact-source GitHub CI. Предыдущий режим экстренной поставки не освобождает этот интеграционный candidate от проверок.
+
+Рабочая ветка/worktree: `codex/reconcile-production-20261110`, `fmonitor-2-reconcile-production-20261110`. Base: `60ed34ac178d1a85b3f21797981a5d8ba35da39c` (`origin/main`). Production читается только для сверки; изменение кода, миграции, restart/deploy и business-data writes на сервере в это поручение не входят. Локальные WIP и соседние worktrees сохраняются. Root задаёт контракт/тесты, независимые sol/low agents выполняют требуемые роли; импорт сохраняет фактическое прежнее авторство.
+
+Контракт: [PRODUCTION-RECONCILIATION-20261110](../../specs/PRODUCTION-RECONCILIATION-20261110.md). Primary capture/logs находятся вне Git: `~/.local/share/fmonitor-2/reconcile-production-20261110/`. Полный локальный `make test`/`make verify` запрещён. Локально — bounded focused checks, полный matrix — существующий Quality Graph consumer. UNKNOWN не означает GREEN/допуск.
+
+Предыдущая очередь сохранена ниже как история и не определяет scope нового поручения.
+
+---
+
 # Текущая цель — завершить PR #286
 
 Поручение владельца 2026-10-01: сравнить текущий production с PR #286, включить отсутствующие изменения, разобрать все падения CI и довести PR до merge. Это поручение разрешает обновление ветки PR и merge после обязательных проверок и независимого review; production deployment, миграции и изменение данных не запрошены.
