@@ -19,7 +19,7 @@ Row level is object × calendar month × installer; legacy also emits an `Ито
 | 11 | Сумма удержания за несоблюдение сроков, руб. | formatted derived string | saved deadline reduction | numeric cents, object-level once |
 | 12 | Расчетная премия к распределению, руб. | monthly delta from legacy formula | saved gross new-volume amount | numeric cents; no workbook recomputation |
 | 13 | КТУ работника | checklist sum of `1/count_installers` | saved original contribution and applied KTU | employee-object; unknown blocks when required |
-| 14 | Премия с учетом КТУ, руб. | legacy KTU allocation; dismissed becomes zero | saved pre-decision allocation | default pay dismissed; legacy value only evidence |
+| 14 | Премия с учетом КТУ, руб. | legacy KTU allocation; dismissed becomes zero | saved pre-decision allocation | historical v2 default paid dismissed; reserved-shares-v1 reserves their share pending an explicit decision; legacy value only evidence |
 | 15 | Дисциплинарная поправка, руб. | current object value repeated per installer/month | `Удержания` + employee/object detail | aggregate each deduction fact once |
 | 16 | Премия за монтаж к выплате, руб. | row formula with repeated deductions | saved final recipient obligation | employee-object numeric cents |
 | 17 | Ответственный производитель работ | current control responsible/name | saved responsible snapshot | blank + control issue if unavailable |
@@ -29,3 +29,11 @@ Row level is object × calendar month × installer; legacy also emits an `Ито
 | 21 | Статус объекта | current object status label | saved object state snapshot | do not conflate lifecycle/admission/payment |
 
 The new workbook retains useful sheets `Объекты`, `Работники`, `Контроль`, `Приложение к приказу`, `Метаданные`, adds primary `Расчёт ОТиЗ`, `Удержания`, and `Решения по выплате`, and may add `К выплате` if the existing appendix contract must remain unchanged. User-controlled strings are text cells; there are no macros or external links.
+
+
+Owner clarification2026-10-29: current exports append field22 «Закрыто за месяц, руб.»
+and monthly employee/object sheets, explicitly current ledger at export time.
+The21legacy source fields retain their saved meanings. New reserved-shares-v1
+calculations keep excluded recipients’ money on «Сохранённые доли»; it is neither a
+payment nor a deduction. See specs/OTIZ-RESERVED-SHARES-20261029.md and
+specs/OTIZ-MONTHLY-TOTALS-20261029.md. Historical accepted/paid snapshots are unchanged.

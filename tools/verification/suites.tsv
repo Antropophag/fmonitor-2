@@ -126,6 +126,7 @@ db	php	tests/InstallationProcess/object_detail_snapshot_schema_observer_001_test
 db	php	tests/InstallationProcess/object_details_editing_mariadb_001_test.php	integration
 db	php	tests/InstallationProcess/object_details_effective_consumers_001_test.php	integration
 db	php	tests/InstallationProcess/otiz_current_progress_001_test.php	integration
+db	php	tests/InstallationProcess/otiz_object_decision_migration_20261030_test.php	integration
 db	php	tests/InstallationProcess/otiz_settlement_schema_001_test.php	integration
 db	php	tests/InstallationProcess/persistence_open_001_test.php	integration
 db	php	tests/InstallationProcess/persistence_prepare_001_test.php	integration
@@ -176,9 +177,13 @@ db	php	tests/Jobs/workforce_scheduler_001_test.php	integration
 db	php	tests/Jobs/workforce_scheduler_concurrency_001_test.php	integration
 db	php	tests/Otiz/excel_inputs_001_test.php	integration
 db	php	tests/Otiz/excel_publication_001_test.php	integration
+db	php	tests/Otiz/monthly_totals_20261029_test.php	integration
 db	php	tests/Otiz/native_admission_001_test.php	integration
 db	php	tests/Otiz/object_register_paging_001_test.php	integration
 db	php	tests/Otiz/object_register_paging_http_001_test.php	integration
+db	php	tests/Otiz/object_scoped_decisions_20261030_test.php	integration
+db	php	tests/Otiz/reserved_shares_20261029_test.php	integration
+db	php	tests/Otiz/reserved_shares_concurrency_20261029_test.php	integration
 db	php	tests/Otiz/runtime_schema_001_test.php	integration
 db	php	tests/Otiz/settlement_concurrency_001_test.php	integration
 db	php	tests/Otiz/settlement_owner_001_test.php	integration
@@ -273,6 +278,9 @@ db	php	tests/Yii2/yii2_object_card_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_stage_actions_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_stage_matrix_001_test.php	integration
+db	php	tests/Yii2/yii2_object_comments_20261030_test.php	integration
+db	php	tests/Yii2/yii2_object_comments_browser_20261030_test.php	e2e
+db	php	tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php	integration
 db	php	tests/Yii2/yii2_object_details_editing_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration
@@ -280,9 +288,14 @@ db	php	tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php	integration
 db	php	tests/Yii2/yii2_original_transport_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_commands_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_concurrency_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_decision_preview_20261030_test.php	e2e
 db	php	tests/Yii2/yii2_otiz_decisions_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_evidence_reads_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_feedback_browser_20261029_test.php	e2e
+db	php	tests/Yii2/yii2_otiz_feedback_queue_20261029_test.php	integration
+db	php	tests/Yii2/yii2_otiz_filters_decisions_20261029_test.php	e2e
 db	php	tests/Yii2/yii2_otiz_guest_return_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_installer_count_20261030_test.php	integration
 db	php	tests/Yii2/yii2_otiz_object_ledger_history_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php	e2e
 db	php	tests/Yii2/yii2_otiz_settlement_001_test.php	integration
@@ -514,6 +527,7 @@ unit	php	tests/Jobs/weekly_fkr_report_delivery_001_test.php	integration
 unit	php	tests/Jobs/weekly_fkr_unknown_delivery_001_test.php	integration
 unit	php	tests/Otiz/excel_calculation_001_test.php	unit
 unit	php	tests/Otiz/legacy_premium_calculation_001_test.php	unit
+unit	php	tests/Otiz/report_filters_20261029_test.php	unit
 unit	php	tests/Otiz/settlement_v2_001_test.php	unit
 unit	php	tests/Otiz/settlement_v2_workbook_001_test.php	unit
 unit	php	tests/Runtime/production_runtime_contract_001_test.php	unit

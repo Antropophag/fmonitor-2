@@ -5,11 +5,11 @@ require dirname(__DIR__).'/bootstrap.php';
 use FMonitor2\InstallationProcess\ObjectDetailsEditCommand;
 use FMonitor2\InstallationProcess\ObjectDetailsFieldRegistry;
 
-if(getenv('FMONITOR_FIXTURE_REACHABILITY')==='object-details-unit-fixture'){assertSameValue(11,count(['address','entrance','regnumber','zavnumber','floors','weight','speed','pittype','pitmaterial','lift_type','paired']),'field matrix fixture');echo"FIXTURE_REACHABLE: object-details-unit-fixture\n";exit(0);}
+if(getenv('FMONITOR_FIXTURE_REACHABILITY')==='object-details-unit-fixture'){assertSameValue(12,count(['address','entrance','regnumber','zavnumber','floors','weight','speed','pittype','pitmaterial','lift_type','paired','comment']),'field matrix fixture');echo"FIXTURE_REACHABLE: object-details-unit-fixture\n";exit(0);}
 
 assertSameValue(true,class_exists(ObjectDetailsFieldRegistry::class),'INTENDED_RED OBJECT-DETAILS-EDITING-001 field registry exists');
 $registry=new ObjectDetailsFieldRegistry();
-assertSameValue(['address','entrance','regnumber','zavnumber','floors','weight','speed','pittype','pitmaterial','lift_type','paired'],array_keys($registry->definitions()),'A1 exact allowlist and no shaftBp');
+assertSameValue(['address','entrance','regnumber','zavnumber','floors','weight','speed','pittype','pitmaterial','lift_type','paired','comment'],array_keys($registry->definitions()),'A1 exact allowlist and no shaftBp');
 
 $valid=['address'=>[' Новый адрес ','Новый адрес'],'entrance'=>['02','02'],'regnumber'=>['00042','00042'],'zavnumber'=>['00123-А','00123-А'],'floors'=>['12',12],'weight'=>['400',400],'speed'=>['1,0','1.0'],'pittype'=>['7','7'],'pitmaterial'=>['9','9'],'lift_type'=>['1','1'],'paired'=>['0',false]];
 foreach($valid as$field=>[$value,$expected]){assertSameValue([$field=>$expected],$registry->normalizePatch([$field=>$value]),'A1/A4 independently normalizes '.$field);}

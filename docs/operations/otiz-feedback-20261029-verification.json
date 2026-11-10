@@ -1,0 +1,85 @@
+{
+  "change": "otiz-feedback-20261029",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/Otiz/MariaDbOtizMonthlyTotals.php",
+    "app/Otiz/MariaDbOtizPortfolioEconomy.php",
+    "app/Otiz/MariaDbOtizSettlementV2.php",
+    "app/Otiz/MariaDbOtizSettlementV2DraftBuilder.php",
+    "app/Otiz/OtizCalculationReportFilter.php",
+    "app/Otiz/OtizSettlementV2Workbook.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Controllers/OtizSettlementV2Controller.php",
+    "app/YiiRuntime/Views/_otiz-v2-group-table.php",
+    "app/YiiRuntime/Views/otiz-calculation-v2.php",
+    "app/YiiRuntime/Views/otiz-economy-v2.php",
+    "config/yii/web.php",
+    "docs/operations/otiz-feedback-20261029-verification.json",
+    "reviews/tests/OTIZ-FEEDBACK-FINANCE-20261029.md",
+    "specs/OTIZ-MONTHLY-TOTALS-20261029.md",
+    "specs/OTIZ-REPORT-FILTERS-20261029.md",
+    "specs/OTIZ-RESERVED-SHARES-20261029.md",
+    "tests/Otiz/monthly_totals_20261029_test.php",
+    "tests/Otiz/report_filters_20261029_test.php",
+    "tests/Otiz/reserved_shares_20261029_test.php",
+    "tests/Otiz/reserved_shares_concurrency_20261029_test.php",
+    "tests/Otiz/settlement_v2_builder_001_test.php",
+    "tests/Otiz/settlement_v2_portfolio_001_test.php",
+    "tests/Otiz/settlement_v2_workbook_001_test.php",
+    "tests/Support/otiz_reserve_race_worker.php",
+    "tests/Yii2/otiz_feedback_20261029_browser.mjs",
+    "tests/Yii2/yii2_otiz_feedback_browser_20261029_test.php",
+    "tests/Yii2/yii2_otiz_settlement_v2_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-RESERVED-SHARES-20261029",
+      "acceptance_id": "R1-R8",
+      "spec_path": "specs/OTIZ-RESERVED-SHARES-20261029.md",
+      "seam": "OtizSettlementV2 public commands and HTTP UI",
+      "tests": [
+        "tests/Otiz/reserved_shares_20261029_test.php",
+        "tests/Otiz/reserved_shares_concurrency_20261029_test.php",
+        "tests/Otiz/settlement_v2_builder_001_test.php",
+        "tests/Otiz/settlement_v2_portfolio_001_test.php",
+        "tests/Yii2/yii2_otiz_feedback_browser_20261029_test.php",
+        "tests/Yii2/yii2_otiz_settlement_v2_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Otiz/reserved_shares_20261029_test.php": "GREEN",
+        "tests/Otiz/reserved_shares_concurrency_20261029_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_builder_001_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_portfolio_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_feedback_browser_20261029_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_settlement_v2_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "OTIZ-MONTHLY-TOTALS-20261029",
+      "acceptance_id": "monthly-totals",
+      "spec_path": "specs/OTIZ-MONTHLY-TOTALS-20261029.md",
+      "seam": "MariaDbOtizMonthlyTotals public read and saved workbook",
+      "tests": [
+        "tests/Otiz/monthly_totals_20261029_test.php",
+        "tests/Otiz/settlement_v2_workbook_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Otiz/monthly_totals_20261029_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_workbook_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "OTIZ-REPORT-FILTERS-20261029",
+      "acceptance_id": "read-filter",
+      "spec_path": "specs/OTIZ-REPORT-FILTERS-20261029.md",
+      "seam": "OtizCalculationReportFilter pure saved projection",
+      "tests": [
+        "tests/Otiz/report_filters_20261029_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Otiz/report_filters_20261029_test.php": "GREEN"
+      }
+    }
+  ]
+}

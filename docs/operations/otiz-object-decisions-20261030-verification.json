@@ -1,0 +1,50 @@
+{
+  "change": "otiz-object-decisions-20261030",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/OtizPaymentDecisionObjectScopeSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/Otiz/MariaDbOtizSettlementV2.php",
+    "app/Otiz/OtizSettlementV2Workbook.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV38.php",
+    "app/YiiRuntime/Assets/otiz.js",
+    "app/YiiRuntime/Controllers/OtizSettlementV2Controller.php",
+    "app/YiiRuntime/Views/_otiz-v2-group-table.php",
+    "app/YiiRuntime/Views/otiz-calculation-v2.php",
+    "specs/OTIZ-OBJECT-DECISIONS-20261030.md",
+    "openspec/changes/otiz-object-decisions-20261030/proposal.md",
+    "openspec/changes/otiz-object-decisions-20261030/design.md",
+    "openspec/changes/otiz-object-decisions-20261030/tasks.md",
+    "openspec/changes/otiz-object-decisions-20261030/specs/otiz/object-scoped-payment-decisions/spec.md",
+    "tests/InstallationProcess/otiz_object_decision_migration_20261030_test.php",
+    "tests/Otiz/object_scoped_decisions_20261030_test.php",
+    "tests/Yii2/yii2_otiz_decision_preview_20261030_test.php",
+    "docs/operations/otiz-object-decisions-20261030.md",
+    "docs/operations/otiz-object-decisions-20261030-verification.json",
+    "reviews/code/OTIZ-OBJECT-DECISIONS-20261030.md",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-OBJECT-DECISIONS-20261030",
+      "acceptance_id": "object-scoped-decisions",
+      "spec_path": "specs/OTIZ-OBJECT-DECISIONS-20261030.md",
+      "seam": "settlement commands, migration/recovery and real Yii browser",
+      "tests": [
+        "tests/Otiz/object_scoped_decisions_20261030_test.php",
+        "tests/InstallationProcess/otiz_object_decision_migration_20261030_test.php",
+        "tests/Yii2/yii2_otiz_decision_preview_20261030_test.php",
+        "tests/Runtime/runtime_recovery_001_test.php",
+        "tests/Runtime/runtime_readiness_load_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Otiz/object_scoped_decisions_20261030_test.php": "GREEN",
+        "tests/InstallationProcess/otiz_object_decision_migration_20261030_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_decision_preview_20261030_test.php": "GREEN",
+        "tests/Runtime/runtime_recovery_001_test.php": "GREEN",
+        "tests/Runtime/runtime_readiness_load_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

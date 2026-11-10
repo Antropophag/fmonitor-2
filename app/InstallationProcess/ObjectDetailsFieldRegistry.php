@@ -11,6 +11,7 @@ final class ObjectDetailsFieldRegistry
         'speed'=>['label'=>'Скорость','type'=>'decimal','unit'=>'м/с'],'pittype'=>['label'=>'Тип шахты','type'=>'reference'],
         'pitmaterial'=>['label'=>'Материал шахты','type'=>'reference'],'lift_type'=>['label'=>'Тип лифта','type'=>'reference'],
         'paired'=>['label'=>'Спаренный лифт','type'=>'boolean'],
+        'comment'=>['label'=>'Комментарий','type'=>'comment'],
     ];
     public function definitions():array{return self::DEFINITIONS;}
     public function normalizePatch(array $patch):array
@@ -18,7 +19,8 @@ final class ObjectDetailsFieldRegistry
         if($patch===[])throw new \InvalidArgumentException('Empty patch.');$out=[];
         foreach($patch as$key=>$value){
             if(!is_string($key)||!isset(self::DEFINITIONS[$key])||(!is_string($value)&&!is_int($value)))throw new \InvalidArgumentException('Invalid field.');
-            $s=is_string($value)?trim($value):(string)$value;if(str_contains($s,"\0"))throw new \InvalidArgumentException('Unsafe value.');$type=self::DEFINITIONS[$key]['type'];
+            $s=is_string($value)?$value:(string)$value;$type=self::DEFINITIONS[$key]['type'];
+            if($type==='comment'){$s=$this->comment($s);}else{$s=trim($s);if(str_contains($s,"\0"))throw new \InvalidArgumentException('Unsafe value.');}
             $out[$key]=match($type){
                 'required_string'=>$s!==''?$s:throw new \InvalidArgumentException('Required value.'),
                 'nullable_string'=>$s===''?null:$s,
@@ -26,6 +28,7 @@ final class ObjectDetailsFieldRegistry
                 'decimal'=>preg_match('/^(?:\d+)(?:[.,]\d+)?$/D',$s)===1&&((float)str_replace(',','.',$s))>0?$this->decimal($s):throw new \InvalidArgumentException('Invalid decimal.'),
                 'reference'=>array_key_exists($s,ObjectDetailsReferenceCatalogue::options($key))?$s:throw new \InvalidArgumentException('Invalid reference.'),
                 'boolean'=>match($s){'0'=>false,'1'=>true,default=>throw new \InvalidArgumentException('Invalid boolean.')},
+                'comment'=>$s,
             };
             if($key==='zavnumber'&&$out[$key]!==null&&strlen($out[$key])>120)throw new \InvalidArgumentException('Factory number is too long.');
             $max=['address'=>500,'entrance'=>80,'regnumber'=>120][$key]??null;if($max!==null&&is_string($out[$key])&&strlen($out[$key])>$max)throw new \InvalidArgumentException('Value is too long.');
@@ -34,5 +37,15 @@ final class ObjectDetailsFieldRegistry
         }return$out;
     }
     private function decimal(string$value):string{$value=str_replace(',','.',$value);[$whole,$fraction]=array_pad(explode('.',$value,2),2,null);if($fraction===null)return(string)(int)$whole;$fraction=rtrim($fraction,'0');return (string)(int)$whole.'.'.($fraction===''?'0':$fraction);}
+    private function comment(string$value):?string
+    {
+        if(!mb_check_encoding($value,'UTF-8'))throw new \InvalidArgumentException('Invalid UTF-8.');
+        $value=str_replace(["\r\n","\r"],"\n",$value);
+        if(preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/u',$value)===1)throw new \InvalidArgumentException('Unsafe value.');
+        $value=preg_replace('/^\s+|\s+$/u','',$value)??throw new \InvalidArgumentException('Invalid value.');
+        if($value==='')return null;
+        if(mb_strlen($value,'UTF-8')>2000)throw new \InvalidArgumentException('Comment is too long.');
+        return$value;
+    }
     public function snapshot(string$field,mixed$value,bool$validated=true):array{$d=self::DEFINITIONS[$field]??throw new \InvalidArgumentException();$display=$value===null?null:($d['type']==='reference'?($validated?ObjectDetailsReferenceCatalogue::display($field,(string)$value):(ObjectDetailsReferenceCatalogue::options($field)[(string)$value]??(string)$value)):(is_bool($value)?($value?'Да':'Нет'):(string)$value));return['value'=>$value,'raw'=>$value,'display'=>$display,'unit'=>$d['unit']??($field==='weight'?'кг':null),'referenceLabel'=>$d['type']==='reference'?$display:null];}
 }
