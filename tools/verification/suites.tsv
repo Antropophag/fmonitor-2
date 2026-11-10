@@ -248,6 +248,7 @@ db	php	tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php	inte
 db	php	tests/Yii2/yii2_control_engineer_assignment_001_test.php	integration
 db	php	tests/Yii2/yii2_control_search_focus_20261029_test.php	e2e
 db	php	tests/Yii2/yii2_current_checklist_stage_001_test.php	integration
+db	php	tests/Yii2/yii2_dashboard_active_change_parity_291_test.php	integration
 db	php	tests/Yii2/yii2_documentary_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_http_001_test.php	integration
 db	php	tests/Yii2/yii2_erp_equipment_facts_001_test.php	integration
@@ -542,6 +543,7 @@ unit	python3	tests/Usage/usage_aggregation_001_test.py	governance
 unit	python3	tests/Verification/architecture_file_size_advisory_001_test.py	governance
 unit	python3	tests/Verification/architecture_guard_001_test.py	unit
 unit	python3	tests/Verification/architecture_js_select_tokens_286_test.py	unit
+unit	python3	tests/Verification/architecture_native_select_tokens_291_test.py	unit
 unit	python3	tests/Verification/backlog_issue_labels_256_test.py	governance
 unit	python3	tests/Verification/change_verification_001_test.py	governance
 unit	python3	tests/Verification/change_verification_consumer_frontier_153_test.py	governance

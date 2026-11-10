@@ -53,7 +53,7 @@ final readonly class YiiOperationalDashboard
         foreach($stages as$i=>$item){if(!is_array($item)||array_keys($item)!==['key','label','value']||$item['key']!==self::STAGES[$i]||!is_string($item['label'])||$item['label']===''||!$this->nonnegative($item['value']))return false;$stageValues[$item['key']]=$item['value'];}
         foreach($weekRows as$i=>$item){if(!is_array($item)||array_keys($item)!==['start','end','starts','finishes']||$item['start']!==$weeks[$i][0]||$item['end']!==$weeks[$i][1]||!$this->nonnegative($item['starts'])||!$this->nonnegative($item['finishes']))return false;$start=\DateTimeImmutable::createFromFormat('!Y-m-d',$item['start'],new \DateTimeZone('Europe/Moscow'));$end=\DateTimeImmutable::createFromFormat('!Y-m-d',$item['end'],new \DateTimeZone('Europe/Moscow'));if($start===false||$end===false||$start->format('N')!=='1'||$end->format('N')!=='7'||$start->modify('+6 days')->format('Y-m-d')!==$item['end']||($i>0&&$weekRows[$i-1]['end']!==$start->modify('-1 day')->format('Y-m-d')))return false;}
         foreach($risks as$i=>$item){if(!is_array($item)||array_keys($item)!==['key','label','value']||$item['key']!==self::START_RISKS[$i]||!is_string($item['label'])||$item['label']===''||!$this->nonnegative($item['value']))return false;}
-        $activeStages=$stageValues['installation']+$stageValues['document_closeout']+$stageValues['needs_assignment_change'];
+        $activeStages=$stageValues['installation']+$stageValues['document_closeout'];
         return array_sum($stageValues)===$result['total'] && $activeStages===$result['active'];
     }
 

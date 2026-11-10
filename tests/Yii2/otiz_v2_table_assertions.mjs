@@ -7,9 +7,9 @@ async function expandObjects(page) {
   }
 }
 
-export async function openRowDecision(page) {
+export async function openRowDecision(page, objectId = "4512", employeeId = "B") {
   await expandObjects(page);
-  await page.locator('[data-grouping="objects"] [data-v2-decision-open]').first().click();
+  await page.locator(`[data-grouping="objects"] [data-v2-decision-open][data-object-id="${objectId}"][data-employee-id="${employeeId}"]`).click();
 }
 
 export async function openCommonDeduction(page, objectId) {
@@ -46,7 +46,7 @@ export async function verifyReferenceTable(page, config) {
     assert.ok(geometry.children.length>=4,'all saved allocations visible');
     for(const cells of geometry.children){assert.equal(cells.length,count);for(let i=0;i<count;i++)assert.ok(Math.abs(cells[i].x-geometry.header[i].x)<1&&Math.abs(cells[i].width-geometry.header[i].width)<1,'child and parent columns align');}
     const trigger=panel.locator('[data-v2-decision-open][data-employee-id="B"]').first();
-    assert.equal(await trigger.locator('xpath=ancestor::tr').count(),1,'dismissed decision belongs to worker row');
+    assert.equal(await trigger.locator('xpath=ancestor::tr').count(),1,'decision belongs to exact object/worker row');
     await trigger.click();
     const decision=page.locator('dialog[open] form[data-recovery-decision]');
     assert.equal(await decision.locator('[name="employeeId"]').inputValue(),'B','decision edits exact stable worker from either axis');

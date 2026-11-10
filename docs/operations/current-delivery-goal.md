@@ -6,7 +6,7 @@
 
 Контракт: [PRODUCTION-RECONCILIATION-20261110](../../specs/PRODUCTION-RECONCILIATION-20261110.md). Primary capture/logs находятся вне Git: `~/.local/share/fmonitor-2/reconcile-production-20261110/`. Полный локальный `make test`/`make verify` запрещён. Локально — bounded focused checks, полный matrix — существующий Quality Graph consumer. UNKNOWN не означает GREEN/допуск.
 
-Сверка1000runtime-файлов закрыта;26focused проверок и независимые ретроспективное тестовое/итоговое ревью пройдены. Legacy Gate3 preimplementation packager для уже реализованного all-GREEN candidate не применяется автоматически; ограничение и исторические RED зафиксированы в delivery record. Дальше — PR и полный exact-source CI.
+Сверка1000runtime-файлов закрыта;26focused проверок и независимые ретроспективное тестовое/итоговое ревью пройдены. Legacy Gate3 preimplementation packager для уже реализованного all-GREEN candidate не применяется автоматически; ограничение и исторические RED зафиксированы в delivery record. PR291 создан; первый полный run42778997280 завершился с2architecture и16test failures. Полная инвентаризация собрана. Активный correction input: openspec/changes/reconcile-production-20261110/ci-repair-verification-input.json, base ed1b6cdb3805920b95ee35787d28fb40862a7997. Исправления прошли отдельные Gate3/final и focused проверки; отправляется обновление PR291 для нового exact-source полного CI.
 
 Предыдущая очередь сохранена ниже как история и не определяет scope нового поручения.
 

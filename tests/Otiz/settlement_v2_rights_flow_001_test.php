@@ -23,6 +23,13 @@ function rightsAmounts(array $calculation): array
     return $amounts;
 }
 
+function rightsReserves(array $calculation): array
+{
+    $reserves=[];
+    foreach($calculation['recipients']as$recipient)if((int)($recipient['reservedCents']??0)>0)$reserves[$recipient['objectId'].'|'.$recipient['employeeId']]=(int)$recipient['reservedCents'];
+    ksort($reserves);return$reserves;
+}
+
 function rightsWorkbookBasis(string $bytes,string $name='Основания'): array
 {
     $path=tempnam(sys_get_temp_dir(),'otiz-rights-xlsx');file_put_contents($path,$bytes);$zip=new ZipArchive();
@@ -186,36 +193,36 @@ try {
         assertSameValue(26000000, array_sum(array_column($economy->payableForObject(73, 4512), 'remainingCents')), 'original plus neighbor rights remain payable once');
     });
     $send(10,7002); // one percent performed while still employed
-    $db->query("UPDATE {$p}fm2_workforce_catalog SET employment_status='dismissed',employed_to='2026-09-04',workforce_source_updated_at='2026-09-27T10:00:00+03:00' WHERE installer_tab_id=7002");
+    $db->query("UPDATE {$p}fm2_workforce_catalog SET employment_status='dismissed',employed_to='2026-09-04',dismissal_effective_at='2026-09-04',dismissal_time_quality='effective_from_source',workforce_source_updated_at='2026-09-27T10:00:00+03:00' WHERE installer_tab_id=7002");
     $check('real workforce dismissal preserves earned rights and enables decision',static function()use($builder,$owner,$op):void{
         $input=$builder->build(73,'2026-09-05');
         $draft=$owner->createDraft(73,$input,$op());
-        assertSameValue(['dismissed',650000],[$draft['recipients'][0]['employment'],$draft['recipients'][0]['amountCents']],'historically earned work defaults to payment with current dismissal warning');
+        assertSameValue(['dismissed',0],[$draft['recipients'][0]['employment'],$draft['recipients'][0]['amountCents']],'dismissed at calculation date receives no automatic payment');assertSameValue(['4512|7002'=>650000],rightsReserves($draft),'earned own share remains separately reserved');assertSameValue(650000,$draft['reservedCents'],'entire earned share is preserved without redistribution');
     });
     $check('T03 replacement commits old plus unclaimed work without duplicate claim keys',static function()use($builder,$owner,$op,&$activeOriginalId,$neighbor):void{
         $old=$owner->read($activeOriginalId);
         $candidate=$owner->createReplacementDraft(73,$activeOriginalId,$old['revision'],$builder->buildReplacement(73,'2026-09-05',$activeOriginalId),'Добавлено отдельное новое выполнение',$op());
         $accepted=$owner->accept(73,$candidate['calculationId'],$candidate['revision'],$op());
         $activeOriginalId=$accepted['calculationId'];
-        assertSameValue([7001=>5200000,7002=>8450000],rightsAmounts($accepted),'replacement adds only new one percent B to the correctly attributed original');
+        assertSameValue([7001=>5200000],rightsAmounts($accepted),'replacement keeps A own share payable');assertSameValue(['4512|7002'=>8450000],rightsReserves($accepted),'B original plus new one percent remains reserved without duplicate or redistribution');
         assertSameValue($neighbor,$owner->read($neighbor['calculationId']),'committed replacement preserves neighboring accepted work');
         $next=$builder->build(73,'2026-09-05');
         assertSameValue(0,array_sum(array_map(static fn($o)=>array_sum(array_column($o['entitlements'],'grossCents')),$next['objects'])),'committed replacement leaves no duplicate new rights');
     });
-    foreach([[15,84500000,[7001=>6760000,7002=>10985000]],[2,52000000,[7001=>4160000,7002=>6760000]]]as[$floors,$fund,$amounts]){
+    foreach([[15,84500000,[7001=>6760000],10985000],[2,52000000,[7001=>4160000],6760000]]as[$floors,$fund,$amounts,$reserved]){
         $payload['fields']['floors']=['raw'=>(string)$floors,'display'=>(string)$floors];
         $encoded=json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
         $db->prepare("UPDATE {$p}fm2_pilot_object_details SET payload_json=?,content_sha256=? WHERE object_id=4512")->execute([$encoded,hash('sha256',$encoded)]);
-        $check('T05 explicit normative correction '.$floors.' floors',static function()use($builder,$owner,$op,&$activeOriginalId,$neighbor,$fund,$amounts):void{
+        $check('T05 explicit normative correction '.$floors.' floors',static function()use($builder,$owner,$op,&$activeOriginalId,$neighbor,$fund,$amounts,$reserved):void{
             $ordinary=$builder->build(73,'2026-09-05');
             assertSameValue($fund,$ordinary['objects'][0]['fundCents'],'real norm changes only through its proven technical source');
             assertSameValue(0,array_sum(array_map(static fn($o)=>array_sum(array_column($o['entitlements'],'grossCents')),$ordinary['objects'])),'norm change alone never creates new work in ordinary calculation');
             $old=$owner->read($activeOriginalId);$candidate=null;
             try{
                 $candidate=$owner->createReplacementDraft(73,$activeOriginalId,$old['revision'],$builder->buildReplacement(73,'2026-09-05',$activeOriginalId),'Исправлена подтверждённая этажность',$op());
-                assertSameValue($amounts,rightsAmounts($candidate),'replacement applies current norm to exactly its owned 21 percent');
+                assertSameValue($amounts,rightsAmounts($candidate),'replacement applies current norm to A own payable share');assertSameValue(['4512|7002'=>$reserved],rightsReserves($candidate),'draft preserves B own normalized reserve');
                 $candidate=$owner->accept(73,$candidate['calculationId'],$candidate['revision'],$op());$activeOriginalId=$candidate['calculationId'];
-                assertSameValue($amounts,rightsAmounts($candidate),'full corrected basis can commit both higher and lower proven value');
+                assertSameValue($amounts,rightsAmounts($candidate),'full corrected basis commits higher/lower payable value');assertSameValue(['4512|7002'=>$reserved],rightsReserves($candidate),'accepted correction preserves B reserve separately');
                 assertSameValue($neighbor,$owner->read($neighbor['calculationId']),'neighbor remains immutable under normative replacement');
             }finally{if($candidate!==null&&$candidate['status']==='draft')$owner->deleteDraft(73,$candidate['calculationId'],$candidate['revision'],'Окончание неуспешного опыта',$op());}
         });

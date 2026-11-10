@@ -53,7 +53,7 @@ function icsAssertFinal(mysqli$db,string$p,string$collation='utf8mb4_unicode_ci'
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);$host=getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1';$port=(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306);$user=getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root';$pass=getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_test_root_local';$name='t_ics_'.bin2hex(random_bytes(5));$admin=new mysqli($host,$user,$pass,'',$port);
 try{
     $admin->query('CREATE DATABASE '.icsQ($name).' DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');$db=icsDb($name);
-    assertSameValue([38,27,28],[strlen('fm2_pilot_completion_fact_corrections'),64-strlen('fm2_pilot_completion_fact_corrections'),65-strlen('fm2_pilot_completion_fact_corrections')],'family-local arithmetic is explicit evidence');
+    assertSameValue([37,27,28],[strlen('fm2_pilot_completion_fact_corrections'),64-strlen('fm2_pilot_completion_fact_corrections'),65-strlen('fm2_pilot_completion_fact_corrections')],'family-local arithmetic is explicit evidence');
     assertSameValue([64,"{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n",''],array_values(icsRunner($name,str_repeat('a',26),true)),'26-byte prefix rejected before DB access');
     assertSameValue([64,"{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n",''],array_values(icsRunner($name,'é',true)),'non-ASCII prefix rejected before DB access');
     assertSameValue([64,"{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n",''],array_values(icsRunner($name,'bad-prefix!',true)),'invalid ASCII punctuation rejected before DB access');

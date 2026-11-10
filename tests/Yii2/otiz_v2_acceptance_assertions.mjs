@@ -8,7 +8,7 @@ export async function verifyUnsavedApproval(page, config) {
   const [unsaved,saving]=config.previewDrafts;
   const url=d=>config.origin+'/pilot/otiz/calculations/'+d.calculationId;
   const form=()=>page.locator('form[data-recovery-deduction]');
-  const decision=()=>page.locator('form[data-recovery-decision]');
+  const decision=()=>page.locator('dialog[open] form[data-recovery-decision]');
   const dialog=()=>page.locator('[data-v2-lifecycle-dialog="accept"]');
   const money=s=>s.replace(/\u00a0/g,' ').trim();
   const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-allocation-row]').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.dataset.employeeId,row.querySelector('[data-allocation-amount]').textContent.replace(/\u00a0/g,' ').trim()])));
@@ -18,7 +18,7 @@ export async function verifyUnsavedApproval(page, config) {
   await confirm('20 000,00');await page.screenshot({path:config.artifacts+'/u01-unsaved-approval.png',fullPage:true});await page.keyboard.press('Escape');
   assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 main recipient table is saved while deduction preview is unsaved');
   await page.goto(url(unsaved));await openRowDecision(page);await decision().getByRole('radio',{name:'Не платить',exact:true}).check();await decision().getByLabel(/Основание решения/).fill('U01 не сохранять решение');await decision().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="decision"]').waitFor();
-  assert.equal(await page.locator('[data-preview-kind="decision"] [data-employee-id="A"]').getAttribute('data-after-cents'),'2000000');assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 decision preview never replaces saved approval recipients even at unchanged total');
+  assert.equal(await page.locator('[data-preview-kind="decision"] [data-employee-id="A"]').getAttribute('data-after-cents'),'1200000');assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 reserved-share preview never replaces saved approval recipients');
   await confirm('20 000,00');await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'saved20000 accepted');
   await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');if(!await form().isVisible())await openCommonDeduction(page);await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
   assert.deepEqual(await mainAmounts(),{A:'11 400,00 ₽',B:'7 600,00 ₽'},'explicit save changes the persisted recipient projection');await confirm('19 000,00');await page.screenshot({path:config.artifacts+'/u01-saved-approval.png',fullPage:true});
@@ -47,21 +47,21 @@ export async function verifyDraftWorkflow(page, config) {
   assert.equal(await deleteDialog.getByLabel(/Причина/).getAttribute('required')!==null,true,'deletion requires explicit reason');
   await page.keyboard.press('Escape');
   assert.equal(await deleteDialog.isVisible(),false,'escape leaves original draft intact');
-  const decision = () => page.locator('form[action$="/decisions"]');
+  const decision = () => page.locator('dialog[open] form[action$="/decisions"]');
   const openDecision = async () => {
     await openRowDecision(page);
-    assert.equal(await decision().count(), 1, 'one saved decision editor per stable dismissed employee, not per object');
+    assert.equal(await decision().count(),1,'one opened editor for exact selected pair');assert.equal(await decision().locator('[name=objectId]').inputValue(),'4512');assert.equal(await decision().locator('[name=employeeId]').inputValue(),'B');assert.equal(await page.locator('form[action$="/decisions"]').count(),4,'each of four object/installer pairs has its own editor');
   };
   await openDecision();
   const revision = await decision().locator('[name="expectedRevision"]').inputValue();
   await decision().getByRole('radio', { name: 'Не платить', exact: true }).check();
-  await decision().getByLabel(/Основание решения/).fill('Проверка двух объектов');
+  await decision().getByLabel(/Основание решения/).fill('Проверка только первого объекта');
   await decision().getByRole('button', { name: 'Предпросмотр', exact: true }).click();
   const preview = page.locator('[data-preview-kind="decision"]');
   await preview.waitFor();
-  for (const text of ['014903','014904','Иванов','Петров']) assert.ok((await preview.innerText()).includes(text), 'preview explains affected object and recipient '+text);
-  assert.equal(await preview.getAttribute('data-preview-total-cents'), '1500000', 'redistribution conserves both object pools');
-  for (const [object,employee,before,after] of [[4512,'A',540000,900000],[4512,'B',360000,0],[4513,'B',300000,0],[4513,'C',300000,600000]]) {
+  for(const text of ['014903','Иванов','Сидоров'])assert.ok((await preview.innerText()).includes(text),'preview explains selected object and coworkers '+text);for(const text of ['014904','Петров'])assert.equal((await preview.innerText()).includes(text),false,'unrelated object hidden from pair preview');
+  assert.equal(await preview.getAttribute('data-preview-total-cents'),'540000','selected object keeps coworker own payable share');assert.equal(await preview.getAttribute('data-preview-reserved-cents'),'360000','selected pair own share is reserved');assert.equal(await preview.locator('tbody tr').count(),2,'only selected object pairs shown');
+  for (const [object,employee,before,after] of [[4512,'A',540000,540000],[4512,'B',360000,0]]) {
     const row = preview.locator(`[data-object-id="${object}"][data-employee-id="${employee}"]`);
     assert.deepEqual([await row.getAttribute('data-before-cents'),await row.getAttribute('data-after-cents')],[String(before),String(after)],'decision preview exact independent allocation');
   }
@@ -75,10 +75,10 @@ export async function verifyDraftWorkflow(page, config) {
   await page.setViewportSize({width:1440,height:1000});
   await decision().getByRole('button', { name: 'Сохранить решение', exact: true }).click();
   await page.goto(url);
-  assert.equal(await page.locator('[data-v2-deduction-open][data-employee-id="B"]').count(),0,'excluded worker exposes no personal deduction in either grouping');
+  assert.equal(await page.locator('[data-v2-deduction-open][data-object-id="4512"][data-employee-id="B"]').count(),0,'excluded pair exposes no personal deduction');assert.ok(await page.locator('[data-v2-deduction-open][data-object-id="4513"][data-employee-id="B"]').count()>0,'same employee on other object remains payable');for(const [object,employee,amount]of [['4512','A','540000'],['4512','B','0'],['4513','B','300000'],['4513','C','300000']])assert.equal(await page.locator(`[data-grouping="objects"] [data-otiz-allocation-row][data-object-id="${object}"][data-employee-id="${employee}"] [data-allocation-amount-cents]`).getAttribute('data-allocation-amount-cents'),amount,'saved exact pair amount');
   await openDecision();
   assert.equal(await decision().getByRole('radio', { name: 'Не платить', exact: true }).isChecked(), true, 'saved choice survives reload');
-  assert.equal(await decision().getByLabel(/Основание решения/).inputValue(), 'Проверка двух объектов', 'saved reason survives reload');
+  assert.equal(await decision().getByLabel(/Основание решения/).inputValue(), 'Проверка только первого объекта', 'saved reason survives reload');
   // Navigate through the real shared editors; returning to the page closes a modal.
   await page.goto(url);
   await openCommonDeduction(page);
@@ -88,9 +88,10 @@ export async function verifyDraftWorkflow(page, config) {
   await deduction().getByRole('button', { name: 'Предпросмотр', exact: true }).click();
   const deductionPreview = page.locator('[data-preview-kind="deduction"]');
   await deductionPreview.waitFor();
-  assert.equal(await deductionPreview.getAttribute('data-preview-total-cents'), '1400000', 'common deduction reduces only first object by 1000 rubles');
+  assert.equal(await deductionPreview.getAttribute('data-preview-total-cents'), '1080000', 'common deduction reduces pool before 60/40 allocation');
   const reduced = deductionPreview.locator('[data-object-id="4512"][data-employee-id="A"]');
-  assert.deepEqual([await reduced.getAttribute('data-before-cents'),await reduced.getAttribute('data-after-cents')],['900000','800000'],'common preview before/after is exact');
+  assert.deepEqual([await reduced.getAttribute('data-before-cents'),await reduced.getAttribute('data-after-cents')],['540000','480000'],'common deduction applies exactly 60 percent to payable coworker');
+  const reservedRow=deductionPreview.locator('[data-object-id="4512"][data-employee-id="B"]');assert.deepEqual([await reservedRow.getAttribute('data-before-reserved-cents'),await reservedRow.getAttribute('data-after-reserved-cents')],['360000','320000'],'common deduction applies other40percent to reserve without redistribution');
   await deduction().getByRole('button', { name: 'Добавить удержание', exact: true }).click();
   await page.goto(url);
   await page.locator('[data-v2-holds-open]').click();
@@ -114,32 +115,34 @@ export async function verifyDraftWorkflow(page, config) {
   for (const [grouping,panel,target] of [['По объектам','objects','employees'],['По монтажникам','employees','objects']]) {
     await page.getByRole('radio', { name: grouping }).click();
     const container=page.locator(`[data-grouping="${panel}"]`);
-    await container.locator('button[aria-expanded]').first().click();
+    const toggle=container.locator('button[aria-expanded]').first();if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();
     const link=container.locator('[data-otiz-crosslink]').first();
-    await link.click();
+    const targetId=await link.getAttribute('data-target-id');await link.click();
     assert.equal(await page.locator(`[data-grouping="${target}"]`).isVisible(),true,'crosslink switches hidden panel');
-    assert.ok(await page.locator(`[data-grouping="${target}"] [aria-expanded="true"]`).count()>0,'crosslink opens matching destination group');
+    assert.equal(await page.locator(`[data-grouping="${target}"] #${targetId} button[aria-expanded]`).getAttribute('aria-expanded'),'true','crosslink opens exact destination group');
   }
-  await page.goto(url+'?group=objects&q=Иванов&pageSize=1&sort=amount_desc');
-  assert.equal(await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').count(),1,'search matches child and paginates parents');
-  assert.ok(await page.locator('[data-grouping="objects"]').getByText('Сидоров Сергей',{exact:false}).count()>0,'matching parent keeps its complete child subtotal');
-  assert.equal(await page.locator('input[name="q"]').inputValue(),'Иванов','server query preserved');
-  assert.equal(await page.locator('[data-grouping="objects"]').getByRole('table').count(),1,'object grouping is a semantic shlz table');
-  await page.goto(url+'?group=objects&pageSize=1&sort=amount_desc');
-  assert.ok((await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').innerText()).includes('014903'),'descending object amount begins with 9000');
-  const next=page.locator('a').filter({hasText:/Следующая/}).first();
-  const href=await next.getAttribute('href');
-  const target=new URL(href,config.origin);
-  assert.deepEqual([target.searchParams.get('page'),target.searchParams.get('sort'),target.searchParams.get('pageSize')],['2','amount_desc','1'],'real next page preserves query');
-  await next.click();
-  assert.ok((await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').innerText()).includes('014904'),'second page is next whole parent, not split children');
-  await page.goto(url+'?group=objects&pageSize=1&sort=amount_asc');
-  assert.ok((await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').innerText()).includes('014904'),'ascending object amount begins with 6000');
-  await page.goto(url+'?group=employees&pageSize=1&sort=amount_desc');
-  assert.equal(await page.locator('[data-grouping="employees"]').getByRole('table').count(),1,'employee grouping is semantic table');
-  assert.ok((await page.locator('[data-grouping="employees"] [data-otiz-employee-toggle]').innerText()).includes('Сидоров'),'employee subtotal sort uses B total6600 over two objects');
-  await page.goto(url+'?group=employees&pageSize=1&sort=amount_asc');
-  assert.ok((await page.locator('[data-grouping="employees"] [data-otiz-employee-toggle]').innerText()).includes('Петров'),'reverse employee sort starts with C3000');
+  await page.goto(url+'?group=objects&q=Иванов&pageSize=10');
+  assert.equal(await page.locator('[data-grouping="objects"] [data-otiz-group-toggle]').count(),1,'search matches child and retains whole parent');
+  assert.ok(await page.locator('[data-grouping="objects"]').getByText('Сидоров Сергей',{exact:false}).count()>0,'matching parent retains complete child allocation');
+  assert.equal(await page.locator('input[type="search"][name="q"]').inputValue(),'Иванов','server search query preserved');
+  assert.equal(await page.locator('[name="sort"]').count(),0,'amount sorting controls remain removed');
+  const pagedUrl=config.origin+'/pilot/otiz/calculations/'+config.pagedDraft.calculationId;
+  await page.goto(pagedUrl+'?group=objects&pageSize=10&q=PAGE');
+  let panel=page.locator('[data-grouping="objects"]');
+  assert.equal(await panel.locator('[data-otiz-group-toggle]').count(),10,'supported page size shows ten complete parents');
+  assert.equal(await panel.locator('select[name="pageSize"]').evaluate(el=>Boolean(el.closest('section').querySelector('table').compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING)),true,'page-size control is below table');
+  const next=panel.getByRole('link',{name:/Следующая/});const nextUrl=new URL(await next.getAttribute('href'),config.origin);
+  assert.deepEqual([nextUrl.searchParams.get('page'),nextUrl.searchParams.get('pageSize'),nextUrl.searchParams.get('q')],['2','10','PAGE'],'real pagination preserves size and search');
+  await next.click();panel=page.locator('[data-grouping="objects"]');
+  assert.equal(await panel.locator('[data-otiz-group-toggle]').count(),1,'last page contains the remaining whole object');
+  assert.ok((await panel.innerText()).includes('PAGE-11'),'natural registration order is deterministic');
+  assert.deepEqual(await panel.locator('[data-otiz-allocation-row]').evaluateAll(rows=>rows.map(r=>[r.dataset.objectId,r.dataset.employeeId])),[['4610','A'],['4610','B']],'pagination never splits an object crew');
+  await Promise.all([page.waitForNavigation(),panel.locator('select[name="pageSize"]').selectOption('25')]);
+  panel=page.locator('[data-grouping="objects"]');assert.equal(await panel.locator('[data-otiz-group-toggle]').count(),11,'footer page-size change returns all eleven parents');
+  assert.equal(await page.locator('input[type="search"][name="q"]').inputValue(),'PAGE','footer size change retains search');
+  await page.goto(url+'?group=employees&pageSize=10');
+  const employeeNames=await page.locator('[data-grouping="employees"] [data-otiz-employee-toggle]').allTextContents();
+  assert.ok(employeeNames[0].includes('Иванов')&&employeeNames[1].includes('Петров')&&employeeNames[2].includes('Сидоров'),'employee groups use stable name order');
   await page.goto(url);
   await openCommonDeduction(page);
   const personal=page.locator('form[action$="/deductions"]').first();
@@ -185,4 +188,17 @@ export async function verifyDraftWorkflow(page, config) {
   assert.equal(await page.locator('[data-preview-kind="deduction"] [data-object-id="4513"][data-employee-id="B"]').getAttribute('data-after-cents'),'295000','second object preview affects only selected object');
 
 
+}
+
+export async function verifyDismissedReserves(page, config) {
+  assert.ok(config.dismissedDraft, 'separate current-policy dismissal fixture exists');
+  await page.goto(config.origin+'/pilot/otiz/calculations/'+config.dismissedDraft.calculationId);
+  for(const [axis,label]of [['objects','По объектам'],['employees','По монтажникам']]){
+    await page.getByRole('radio',{name:label,exact:true}).check();
+    const panel=page.locator(`[data-grouping="${axis}"]`);
+    for(const toggle of await panel.locator('[data-otiz-group-toggle],[data-otiz-employee-toggle]').all())if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();
+    assert.ok((await panel.innerText()).includes('Уволен'),'dismissal warning remains visible in '+axis);
+    for(const object of ['4512','4513'])assert.equal(await panel.locator(`[data-otiz-allocation-row][data-object-id="${object}"][data-employee-id="B"] [data-allocation-amount-cents]`).getAttribute('data-allocation-amount-cents'),'0','dismissed own share is not payable');
+    if(axis==='objects')for(const [object,reserve]of [['4512','3 600,00'],['4513','3 000,00']])assert.ok((await panel.locator(`[data-otiz-allocation-row][data-object-id="${object}"][data-employee-id="B"]`).innerText()).replace(/\u00a0/g,' ').includes('Сохранено '+reserve),'own reserve displayed per object');
+  }
 }

@@ -274,6 +274,12 @@
   ],
   "capability_ownership": [
     {
+      "name": "architecture-sql-ownership",
+      "patterns": ["tools/architecture/check.py", "tools/architecture/check"],
+      "verifiers": ["tests/Verification/architecture_native_select_tokens_291_test.py", "tests/Verification/architecture_js_select_tokens_286_test.py", "tests/Verification/architecture_guard_001_test.py"],
+      "consumers": []
+    },
+    {
       "name": "installer-utilization-observations",
       "patterns": [
         "app/Workforce/InstallerUtilizationObservationSchemaMigration.php",
@@ -718,6 +724,7 @@
       "verifiers": [
         "tests/Yii2/yii2_object_queue_001_test.php",
         "tests/Yii2/yii2_object_actual_dates_20261030_test.php",
+        "tests/Yii2/yii2_dashboard_active_change_parity_291_test.php",
         "tests/Yii2/yii2_object_card_001_test.php"
       ],
       "consumers": []
