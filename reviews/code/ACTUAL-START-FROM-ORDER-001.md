@@ -29,3 +29,21 @@ No remaining blocking contract, replay, concurrent-submission, authorization-rac
 This is the substantive exact-source independent final review required by the owner's emergency production-first route. It is not automated Gate 5 admission: earlier runs were not harness-native per-test records. Formal Gate 3 and full exact-source GitHub CI remain owner-deferred and `UNKNOWN`; the historical recovery fixture failure is not called GREEN. This review does not itself approve CI, merge, old-data deletion, or any broader production change outside the scoped deployment described in the delivery record.
 
 Within those explicit limits, candidate source `73675f16152a4ac63a70bac003d5ec08853b37179cc527c3ced7e650da12350e` is **APPROVED** for the scoped production delivery authorized by the owner.
+
+## PR293 integration correction — independent final review
+
+- Reviewer: `/root/pr_test_closure`; authored none of the specification, tests, product implementation, fixture corrections, or evidence.
+- Review base: `7835373b01066f11ed327b0fd751bb8dea4dc1f7`.
+- Frozen patch SHA-256: `3389fa7a775a71263b4a05639f44f73d78fd5ce899f371fa3a574a31cfacf3b2`.
+- Exact candidate source: `aeff81129c6f452b352e46849680ce1f29f05c0e92064c4af231adec9b526a30`.
+- Exact executable source: `01ab2ae90c523c60b47d42f7439a3f0d04156b50f4416fb383f032f4b2756c9d`.
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20261113T144115Z-b4acc6a8bc/package.json`.
+- Verdict: **APPROVED** for the complete frozen PR293 integration-correction delta.
+
+No unresolved findings remain. The earlier retrospective test-review finding is fixed by changing the current recovery manifest expectation from 105 to 106 tables. The bounded preimplementation finding is fixed by negative standalone-opening coverage for UUID versions 1, 2, 3 and 5 with an exact unchanged snapshot. The implementation widens UUID acceptance only for the persisted signed-start path after its immutable intent/revision/date binding; standalone confirmed opening remains UUIDv4-only. Passing the persisted flag through the lower opening owner preserves that boundary. Removing the composite `%PDF-` shortcut restores the original owner's `not_pdf` and `unsafe_pdf` classification, safe receipt and no-accepted-revision behavior.
+
+The fixture changes migrate current upload flows to the public signed-upload seam: upload applies composition and opens immediately; correction preserves the initial opening tuple; partial opening retains the accepted original; exact replay, concurrent submission and lost-commit acknowledgement remain covered. Manual `open` and `open_confirmed` HTTP actions are now tested as retired with zero writes. Raw-original setup remains only where an unopened/upcoming or legacy read-model state is the explicit subject. Schema inventories add exactly the v39 intent table, recovery expects 106 current tables, and the changed asset contract retains exact hashes. I found no weakened material assertion or deleted acceptance without an equivalent current-seam check.
+
+Retained evidence includes the complete initial 60-failure inventory and all intermediate failures. The final focused logs cover transport receipts/roles/bytes, browser behavior, lineage and cutover, current recovery, architecture/HTTP qualification, and the production nginx/FPM browser lifecycle. `uuid-final.log` records exit 0 for the persisted UUID v1/v2/v3/v5 and standalone-negative matrix at executable source `01ab2ae90c523c60b47d42f7439a3f0d04156b50f4416fb383f032f4b2756c9d`. `git diff --check` is clean.
+
+This review is independent substantive review, not harness automated admission: the historical focused evidence was retained as complete logs rather than native per-command reviewer records. A new exact-source full GitHub CI run is still pending and is not called GREEN here. This verdict does not approve deployment, data reset, or any source beyond the frozen PR293 correction delta.
