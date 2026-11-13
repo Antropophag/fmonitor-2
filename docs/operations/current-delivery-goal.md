@@ -1,3 +1,11 @@
+# Текущая цель — месячная сессия и вход по внешним ссылкам
+
+Owner13 ноября2026 запросил исправить потерю входа по external link и сделать session lifetime месяц (30суток). Worktree `fmonitor-2-persistent-month-session`, контракт `specs/MONTH-SESSION-001.md`, [delivery record](month-session-20261113.md). Scope только session config и регрессии; production-first режим текущей беседы, focused checks и independent final review. Gate3/fullCI owner-deferred; full local make test/verify запрещён. Старые session files, keys, users и прежние production patches сохраняются. Поставка выполнена13.11.2026 16:49МСК: один config-файл, independent final review APPROVED, focused browser/session-failure GREEN, live cookie30дней/Lax/Secure/HttpOnly и health200. Новые параметры старой cookie применяются при следующем входе. Gate3/fullCI остаются отложенными.
+
+Предыдущая цель ниже сохранена как история.
+
+---
+
 # Текущая цель — провести production-изменения через Git и CI
 
 Поручение владельца 2026-11-10: собрать все фактически работающие production-изменения в Git, дополнить тесты, пройти независимые ревью и полный exact-source GitHub CI. Предыдущий режим экстренной поставки не освобождает этот интеграционный candidate от проверок.
