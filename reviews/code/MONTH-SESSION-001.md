@@ -38,3 +38,15 @@ No unresolved findings. Against the previously reviewed commit `dd08855c1da160b3
 The complete first CI run `43439035233` showed one failed job/category and one `REGRESSION_FAILURE`, at `tests/Yii2/yii2_authentication_001_test.php:84`, because the runtime correctly emitted Lax while the assertion still required Strict. All other categories and the other integration shard passed. The corrected focused authentication test is GREEN in the integration profile with exit 0 at executable source `718131f4b3d980d149d7f49d9caf1cd1970743b8ba639a6f10e1cd7dbe59d945`; `git diff --check` is clean.
 
 This delta approval does not turn the failed first run into GREEN. The replacement exact-source full CI run remains required before merge, and its result must be evaluated independently.
+
+## PR #292 clipboard-fixture delta review — 13 November 2026
+
+Reviewer: `/root/month_session_final_review` (independent; no authorship of this root-authored test correction)
+
+Verdict: **APPROVED** for candidate source `44dcd62e868f912cb722bedc6af29326e7b74fd949cadc1964c67917878b365a` and executable source `65a4923a171acb804bf9ad5330b726127f9ffcca60e44a7793edb9561786d5e0`, prepared in `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20261113T145624Z-34994b3844/package.json`.
+
+No unresolved findings. Against the previously reviewed commit `bfcc68f7d3c8fb7fcb5f993d98e5b6c1d59d9fe0`, the executable delta changes only `tests/Yii2/user_access_browser.mjs`. The former fixture deleted the own `navigator.clipboard` property, which exposed Chromium's inherited native API; the retained probe demonstrates `own=false` with an available function after deletion. The correction defines an explicit own `undefined` value, asserts the API is actually absent, and retains the rejection, exact copied URL, and success-path assertions. It strengthens the keyboard-fallback check by also requiring focus and full selection of the invitation URL. The property remains configurable so the following success mock is installed normally. Production `users.js` is unchanged.
+
+The complete CI run `43443426217` had one failed executable category/job and one `REGRESSION_FAILURE`: `yii2_user_access_browser_001_test.php` timed out waiting for the success message after the inherited native clipboard call asynchronously overwrote state. Fast, unit, governance, and both integration shards passed; the failed aggregate verify/Quality Graph results reflect that same e2e failure. The complete failed-job inventory and logs were inspected. The corrected full focused user-access browser flow is GREEN with exit 0 at executable source `65a4923a171acb804bf9ad5330b726127f9ffcca60e44a7793edb9561786d5e0`; `git diff --check` is clean. No additional test is needed for this fixture-only correction.
+
+This approval does not claim CI GREEN. A new exact-source full CI run remains required before merge, and its result must be evaluated independently.

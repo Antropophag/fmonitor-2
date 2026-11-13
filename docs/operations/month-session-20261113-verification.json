@@ -8,6 +8,7 @@
     "specs/MONTH-SESSION-001.md",
     "tests/Runtime/production_runtime_admin_browser.mjs",
     "tests/Yii2/month_session_browser.mjs",
+    "tests/Yii2/user_access_browser.mjs",
     "tests/Yii2/yii2_authentication_001_test.php",
     "tests/Yii2/yii2_month_session_001_test.php",
     "tools/verification/suites.tsv"
