@@ -7,7 +7,7 @@ use FMonitor2\AssignmentOrderOriginal\{AssignmentOrderOriginalApplicationReferen
 final readonly class MariaDbAssignmentOrderApplicationOperation
 {
     public function __construct(private MariaDbAssignmentOrderApplicationSql $sql,private AssignmentOrderOriginalApplicationReferenceReader $originals) {}
-    public function perform(ApplyAssignmentOrderOriginalCommand $c,AssignmentOrderOriginalApplicationReference $reference,string $at,string $permission):AssignmentOrderApplicationResult
+    public function perform(ApplyAssignmentOrderOriginalCommand $c,AssignmentOrderOriginalApplicationReference $reference,string $at,string $permission,bool$signedStartContinuation=false):AssignmentOrderApplicationResult
     {
         if($this->sql->idle()||!in_array($permission,['assignment_order.composition.apply','installation.open'],true))throw new \LogicException('Application operation requires its owning transaction.');
         $s=$this->sql;$m=$reference->metadata();
@@ -28,10 +28,10 @@ final readonly class MariaDbAssignmentOrderApplicationOperation
             $today=(new \DateTimeImmutable($at))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d');if($m['documentDate']>$today)return$this->rejectTx($c,$at,'rejected','document_date_in_future');
             $kind=$previous===[]?'initial':((int)$previous[0]['assignment_order_id']===$c->orderId?'reapplication':'new_order');
             if($kind==='reapplication'&&$previous[0]['original_revision_id']===$c->originalRevisionId)return$this->rejectTx($c,$at,'rejected','no_changes');
-            if($kind==='reapplication'&&$case[0]['actual_start_date']!==null)return$this->rejectTx($c,$at,'rejected','reapplication_after_opening');
+            if($kind==='reapplication'&&$case[0]['actual_start_date']!==null){$allowed=$signedStartContinuation&&$permission==='installation.open'&&$this->signedOpening($m['caseId'],$case[0]['actual_start_date'])&&$this->sameSignedOrderDate($previous[0]['original_revision_id'],$c->originalRevisionId);if(!$allowed)return$this->rejectTx($c,$at,'rejected','reapplication_after_opening');}
             if($previous!==[]&&$kind==='new_order'&&$m['orderVersion']<=(int)$previous[0]['order_version'])return$this->rejectTx($c,$at,'conflict','target_not_current');
             if($previous!==[]&&$kind==='new_order'&&$m['documentDate']<$previous[0]['document_date'])return$this->rejectTx($c,$at,'rejected','effective_date_before_current');
-            if($case[0]['actual_start_date']!==null&&$kind==='new_order'&&$m['documentDate']<$case[0]['actual_start_date'])return$this->rejectTx($c,$at,'rejected','effective_date_before_opening');
+            if($case[0]['actual_start_date']!==null&&$kind==='new_order'&&$m['documentDate']<$case[0]['actual_start_date']&&!($signedStartContinuation&&$permission==='installation.open'&&$this->signedOpening($m['caseId'],$case[0]['actual_start_date'])))return$this->rejectTx($c,$at,'rejected','effective_date_before_opening');
             $crew=$m['composition']['installers'];$ids=array_column($crew,'tabId');$eligibility=AssignmentOrderCurrentEligibility::confirm($s->db,$s->prefix,$ids,$m['composition']['engineer']['userId'],$m['documentDate']);
             if($eligibility!=='eligible')return$this->rejectTx($c,$at,$eligibility==='dependency_unavailable'?'failed':'rejected',$eligibility==='control_engineer_required'?'control_engineer_not_eligible':$eligibility);
             $evidence=$this->eligibility($ids);$selected=['selectedInstallers'=>$crew,'selectedEngineer'=>$m['composition']['engineer']];
@@ -51,4 +51,15 @@ final readonly class MariaDbAssignmentOrderApplicationOperation
     private function audit(ApplyAssignmentOrderOriginalCommand$c,string$at,string$status,?string$reason,?int$id):void{$this->sql->execute('INSERT INTO '.$this->sql->table('fm2_assignment_application_attempts').' (request_id,actor_user_id,object_id,assignment_order_id,status,reason_code,application_id,attempted_at_utc) VALUES (?,?,?,?,?,?,?,?)',[$c->requestId,$c->actorId,$c->objectId,$c->orderId,$status,$reason,$id,$this->dbTime($at)]);}
     private function dbTime(string$s):string{return str_replace(['T','Z'],[' ','.000000'],$s);}private function out(string$s,?string$r,?array$a=null):AssignmentOrderApplicationResult{return new AssignmentOrderApplicationResult($s,$r,$a);}
     private function datePresent(mixed$v):bool{return is_string($v)&&trim($v)!==''&&!str_starts_with(trim($v),'0000-00-00')&&!preg_match('/^0+$/D',trim($v));}
+    private function signedOpening(int$caseId,mixed$actual):bool
+    {
+        if(!is_string($actual))return false;$s=$this->sql;
+        $rows=$s->rows('SELECT os.appendix_start_date FROM '.$s->table('fm2_process_events').' e JOIN '.$s->table('fm2_assignment_order_applications')." a ON a.application_id=CAST(JSON_UNQUOTE(JSON_EXTRACT(e.payload_json,'$.application.applicationId')) AS UNSIGNED) AND a.installation_case_id=e.installation_case_id JOIN ".$s->table('fm2_assignment_order_original_revisions').' v ON v.revision_id=a.original_revision_id JOIN '.$s->table('fm2_assignment_order_original_starts')." os ON os.request_id=v.request_id WHERE e.installation_case_id=? AND e.event_type='installation_opened_from_original' ORDER BY e.id LIMIT 1",[$caseId]);
+        return count($rows)===1&&$rows[0]['appendix_start_date']===$actual;
+    }
+    private function sameSignedOrderDate(string$previousRevision,string$currentRevision):bool
+    {
+        $s=$this->sql;$rows=$s->rows('SELECT v.revision_id,os.appendix_start_date FROM '.$s->table('fm2_assignment_order_original_revisions').' v JOIN '.$s->table('fm2_assignment_order_original_starts').' os ON os.request_id=v.request_id WHERE v.revision_id IN (?,?)',[$previousRevision,$currentRevision]);
+        if(count($rows)!==2)return false;$dates=array_column($rows,'appendix_start_date','revision_id');return isset($dates[$previousRevision],$dates[$currentRevision])&&$dates[$previousRevision]===$dates[$currentRevision];
+    }
 }

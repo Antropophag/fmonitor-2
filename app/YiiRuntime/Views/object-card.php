@@ -211,17 +211,8 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
             </section>
         <?php elseif (!$opened && !empty($confirmedOriginal)): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">
-                <div><h2 id="next-action-heading">Открыть монтажные работы</h2><p>Укажите фактическую дату начала работ.</p></div>
-                <?php if ($canOpen): ?><form class="fm2-inline-form" method="post" action="/pilot/objects/<?= (int) $id ?>/execution">
-                    <?= Html::hiddenInput('_csrf', $csrf) ?>
-                    <?= Html::hiddenInput('action', 'open_confirmed') ?>
-                    <?= Html::hiddenInput('requestId', ViewSupport::uuid()) ?>
-                    <?= Html::hiddenInput('orderId', $confirmedOriginal['orderId']) ?>
-                    <?= Html::hiddenInput('revisionId', $confirmedOriginal['revisionId']) ?>
-                    <?= Html::hiddenInput('sequence', $confirmedOriginal['sequence']) ?>
-                    <label class="shlz-field" for="actualStartDate"><span class="shlz-field__label">Фактическая дата начала работ</span><span class="shlz-field__control"><input class="shlz-input" id="actualStartDate" type="date" name="actualStartDate" aria-label="Фактическая дата начала работ" required></span></label>
-                    <button class="shlz-button shlz-button--primary" type="submit">Открыть работы</button>
-                </form><?php endif ?>
+                <div><h2 id="next-action-heading">Завершить открытие работ</h2><p>Оригинал сохранён, но открытие не завершено. Повторите загрузку с тем же файлом и датами.</p></div>
+                <?php if ($canUpload): ?><a class="shlz-button shlz-button--primary" href="/pilot/objects/<?= (int) $id ?>/assignment-orders/<?= (int) $confirmedOriginal['orderId'] ?>/originals/submit">Вернуться к оригиналу</a><?php endif ?>
             </section>
         <?php elseif ($pendingComposition !== null): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">

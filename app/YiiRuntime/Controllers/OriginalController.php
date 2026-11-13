@@ -36,6 +36,17 @@ final class OriginalController extends PreopeningController
             $resources = new PreopeningResources(Yii::$app->db);
             $result = $resources->originalAccess()->readSubmissionForm($this->actor(), $id, $orderId);
             if (($result['reasonCode'] ?? null) === 'SERVICE_UNAVAILABLE') $this->reportResult('dependency');
+            if ($result['status'] === 'found') {
+                $start = $resources->originalStartQuery()->readCurrent($id, $orderId);
+                if ($start['status'] === 'unavailable') return $this->status(503, true);
+                if ($result['current'] !== null) {
+                    $result['current']['appendixStartDate'] = $start['status'] === 'found' && is_array($start['value'])
+                        ? ($start['value']['appendixStartDate'] ?? null)
+                        : null;
+                } else {
+                    $result['suggestedAppendixStartDate'] = $resources->plannedStartDate($id) ?? '';
+                }
+            }
             return $result['status'] === 'found'
                 ? $this->render('@app/app/YiiRuntime/Views/original', $result + ['objectIdentity' => $resources->originalObjectIdentity($id), 'identity' => Yii::$app->user->identity, 'csrf' => Yii::$app->request->csrfToken])
                 : $this->domain($result);
@@ -61,11 +72,12 @@ final class OriginalController extends PreopeningController
             $resources = new PreopeningResources();
             $context = $resources->submission()->resolveSubmissionContext($this->actor(), $id, $orderId, $fields['mode']);
             if ($context['status'] !== 'found') return $this->contextFailure($context);
+            if (!$this->cap('installation.open')) return $this->json(403, ['error' => 'ACCESS_DENIED']);
             $bytes = Yii::$app->request->rawBody;
             if (strlen($bytes) !== $admission['length']) return $this->json(400, ['error' => 'INVALID_REQUEST']);
             $stream = new O\AssignmentOrderOriginalMemoryStream($bytes);
             $command = $this->command($fields, $context, $stream);
-            return $this->result($resources->original()->submitAssignmentOrderOriginal($command));
+            return $this->result($resources->originalStart()->submit($command, $id, $fields['appendixStartDate']));
         } catch (\Throwable $error) {
             Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'original_controller'));
             return $this->json(503, ['error' => 'SERVICE_UNAVAILABLE'], true);
@@ -102,36 +114,45 @@ final class OriginalController extends PreopeningController
         );
     }
 
-    private function result(O\AssignmentOrderOriginalResult $result): Response
+    private function result(array $result): Response
     {
-        $status = match ($result->status()) {
-            O\AssignmentOrderOriginalStatus::ACCEPTED => 201,
-            O\AssignmentOrderOriginalStatus::REPLAYED => 200,
-            O\AssignmentOrderOriginalStatus::CONFLICT => 409,
-            O\AssignmentOrderOriginalStatus::FAILED => 503,
-            O\AssignmentOrderOriginalStatus::REJECTED => match ($result->reasonCode()) {
-                O\AssignmentOrderOriginalReason::AUTHORIZATION_DENIED => 403,
-                O\AssignmentOrderOriginalReason::ORDER_NOT_FOUND => 404,
-                O\AssignmentOrderOriginalReason::FILE_TOO_LARGE => 413,
+        $outcome = (string) ($result['status'] ?? 'failed');
+        $reason = $result['reasonCode'] ?? null;
+        $status = match ($outcome) {
+            'accepted' => 201,
+            'replayed' => 200,
+            'conflict' => 409,
+            'pending', 'failed' => 503,
+            'rejected' => match ($reason) {
+                'authorization_denied' => 403,
+                'order_not_found' => 404,
+                'file_too_large' => 413,
                 default => 422,
             },
+            default => 503,
         };
         $response = Yii::$app->response;
         $response->format = Response::FORMAT_RAW; $response->statusCode = $status;
         $response->headers->set('Content-Type', 'application/json; charset=UTF-8');
         if ($status === 503) {
             $response->headers->set('Retry-After', '60');
-            $reason = $result->reasonCode();
             $category = match ($reason) {
-                O\AssignmentOrderOriginalReason::STORAGE_FAILURE => 'storage',
-                O\AssignmentOrderOriginalReason::PERSISTENCE_FAILURE,
-                O\AssignmentOrderOriginalReason::PERSISTENCE_OUTCOME_UNKNOWN => 'database',
-                O\AssignmentOrderOriginalReason::STREAM_FAILURE => 'dependency',
+                'storage_failure' => 'storage',
+                'persistence_failure', 'persistence_outcome_unknown' => 'database',
+                'stream_failure', 'dependency_unavailable' => 'dependency',
                 default => 'unexpected',
             };
             $this->reportResult($category);
         }
-        $response->content = O\AssignmentOrderOriginalWorkerResultEncoder::encode($result);
+        $original = $result['original'] ?? null;
+        $payload = $original instanceof O\AssignmentOrderOriginalResult
+            ? json_decode(O\AssignmentOrderOriginalWorkerResultEncoder::encode($original), true, flags: JSON_THROW_ON_ERROR)
+            : ['requestId' => null, 'rootOriginalId' => null, 'currentRevisionId' => null, 'revisionNumber' => null, 'documentDate' => null, 'sha256' => null, 'byteSize' => null, 'uploadedAt' => null];
+        $payload['status'] = $outcome;
+        $payload['reasonCode'] = $reason;
+        $payload['retryable'] = (bool) ($result['retryable'] ?? false);
+        $payload['opening'] = $result['opening'] ?? null;
+        $response->content = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
         return $response;
     }
 

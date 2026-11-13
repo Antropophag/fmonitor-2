@@ -5,7 +5,7 @@ namespace FMonitor2\YiiRuntime\Models;
 final readonly class OriginalMetadata
 {
     public const KEYS = [
-        'csrfToken', 'requestId', 'mode', 'documentDate', 'compositionConfirmed',
+        'csrfToken', 'requestId', 'mode', 'documentDate', 'appendixStartDate', 'compositionConfirmed',
         'rootOriginalId', 'targetRevisionId', 'expectedCurrentRevisionId',
         'correctionReason', 'originalFilename',
     ];
@@ -32,7 +32,7 @@ final readonly class OriginalMetadata
         if (!is_array($fields) || array_keys($fields) !== self::KEYS || $canonical !== $json) {
             throw new \InvalidArgumentException();
         }
-        foreach (['csrfToken', 'requestId', 'mode', 'documentDate', 'originalFilename'] as $key) {
+        foreach (['csrfToken', 'requestId', 'mode', 'documentDate', 'appendixStartDate', 'originalFilename'] as $key) {
             if (!is_string($fields[$key])) {
                 throw new \InvalidArgumentException();
             }

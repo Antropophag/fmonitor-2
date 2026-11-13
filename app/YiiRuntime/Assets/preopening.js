@@ -112,9 +112,9 @@
   if (!button || !status || !fileInput) return;
   let busy = false;
   const renew = () => { if (!busy && field('requestId')) field('requestId').value = crypto.randomUUID(); };
-  const messages = {future_document_date: 'Дата распоряжения не может быть в будущем.', composition_not_confirmed: 'Подтвердите соответствие оригинала выбранному составу.', invalid_command: 'Проверьте дату и причину исправления.', not_pdf: 'Выберите PDF-файл подписанного оригинала.', invalid_pdf: 'Не удалось прочитать PDF. Выберите корректный файл.', unsafe_pdf: 'PDF содержит недопустимое активное содержимое. Выберите другой файл.', stale_revision: 'Оригинал уже исправлен. Обновите форму перед новой загрузкой.', authorization_denied: 'Недостаточно полномочий для этого действия.', ACCESS_DENIED: 'Недостаточно полномочий для этого действия.', CSRF_INVALID: 'Срок действия формы истёк. Откройте её заново.', REQUEST_TOO_LARGE: 'Размер PDF не должен превышать 20 МиБ.'};
+  const messages = {future_document_date: 'Дата распоряжения не может быть в будущем.', invalid_appendix_start_date: 'Укажите дату начала работ из приложения к подписанному распоряжению.', appendix_start_date_conflict: 'Дата начала работ отличается от принятой ранее. Обновите форму и проверьте оригинал.', composition_not_confirmed: 'Подтвердите соответствие оригинала выбранному составу.', invalid_command: 'Проверьте даты и причину исправления.', not_pdf: 'Выберите PDF-файл подписанного оригинала.', invalid_pdf: 'Не удалось прочитать PDF. Выберите корректный файл.', unsafe_pdf: 'PDF содержит недопустимое активное содержимое. Выберите другой файл.', stale_revision: 'Оригинал уже исправлен. Обновите форму перед новой загрузкой.', authorization_denied: 'Недостаточно полномочий для загрузки и открытия работ.', ACCESS_DENIED: 'Недостаточно полномочий для загрузки и открытия работ.', CSRF_INVALID: 'Срок действия формы истёк. Откройте её заново.', REQUEST_TOO_LARGE: 'Размер PDF не должен превышать 20 МиБ.'};
   const metadata = file => ({csrfToken: field('csrfToken').value, requestId: field('requestId').value, mode: field('mode').value,
-    documentDate: field('documentDate').value, compositionConfirmed: field('compositionConfirmed').checked,
+    documentDate: field('documentDate').value, appendixStartDate: field('appendixStartDate').value, compositionConfirmed: field('compositionConfirmed').checked,
     rootOriginalId: field('rootOriginalId').value || null, targetRevisionId: field('targetRevisionId').value || null,
     expectedCurrentRevisionId: field('expectedCurrentRevisionId').value || null, correctionReason: field('correctionReason').value || null,
     originalFilename: file.name});
@@ -136,7 +136,8 @@
       const receipt = value.requestId === data.requestId && value.reasonCode === null && value.retryable === false && typeof value.rootOriginalId === 'string' && typeof value.currentRevisionId === 'string' && Number.isInteger(value.revisionNumber) && value.revisionNumber > 0;
       if ((accepted || replayed) && receipt) { location.assign(form.dataset.returnUrl); return; }
       changedIntent = response.status >= 400 && response.status < 500;
-      status.textContent = changedIntent ? (messages[value.reasonCode || value.error] || 'Не удалось принять оригинал. Проверьте форму и повторите загрузку.') : 'Не удалось подтвердить сохранение. Повторите загрузку с тем же файлом и данными.';
+      const pending = response.status === 503 && value.status === 'pending' && value.requestId === data.requestId;
+      status.textContent = pending ? 'Оригинал сохранён, но открытие работ не завершено. Не меняйте файл и данные: повторите загрузку с тем же запросом.' : (changedIntent ? (messages[value.reasonCode || value.error] || 'Не удалось принять оригинал. Проверьте форму и повторите загрузку.') : 'Не удалось подтвердить сохранение. Повторите загрузку с тем же файлом и данными.');
     } catch {
       changedIntent = Boolean(response && response.status >= 400 && response.status < 500);
       status.textContent = changedIntent ? 'Не удалось принять оригинал. Проверьте форму и повторите загрузку.' : 'Не удалось подтвердить сохранение. Проверьте связь и повторите загрузку.';

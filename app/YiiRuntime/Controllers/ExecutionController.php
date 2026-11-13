@@ -53,34 +53,8 @@ final class ExecutionController extends PreopeningController
         catch (\InvalidArgumentException) { return $this->status(400); }
         $action = $fields['action'] ?? '';
         if ($action === 'apply') return $this->apply($resources, $id, $fields);
-        if ($action === 'open') return $this->open($resources, $id, $fields);
-        if ($action !== 'open_confirmed') return $this->status(400);
-        if (!$this->cap('installation.open')) return $this->status(403);
-        if (!$this->validOpeningShape($fields)) return $this->status(400);
-        $command = new C\OpenConfirmedOriginalCommand(
-            $fields['requestId'], $id, (int) ($fields['orderId'] ?? 0),
-            $fields['revisionId'] ?? '', (int) $fields['sequence'],
-            $fields['actualStartDate'] ?? '', $this->actor(),
-        );
-        $result = C\ProductionConfirmedOriginalOpeningFactory::create($resources->db, $resources->prefix)->openConfirmedOriginal($command);
-        if ($result['accepted']) return $this->redirect303(Yii::$app->request->get('return') === 'construction-control' ? '/pilot/construction-control/objects/'.$id.'/checklist' : '/pilot/objects/'.$id);
-        $reason = $result['reasonCode'] ?? '';
-        $unavailable = in_array($reason, ['dependency_unavailable', 'persistence_outcome_unknown'], true);
-        if ($unavailable) $this->reportResult($reason);
-        return $this->pageError(
-            $unavailable ? 503 : 422,
-            $unavailable ? 'Результат открытия неизвестен. Проверьте карточку перед повтором.' : 'Работы не открыты. Проверьте дату и актуальность распоряжения.',
-            '/pilot/objects/'.$id,
-            'Вернуться к карточке',
-        );
-    }
-
-    private function validOpeningShape(array $fields): bool
-    {
-        return $this->positive($fields['orderId'] ?? null) !== null
-            && $this->sequence($fields['sequence'] ?? null) !== null
-            && $this->revision($fields['revisionId'] ?? null)
-            && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D', $fields['requestId'] ?? '') === 1;
+        if ($action === 'open' || $action === 'open_confirmed') return $this->status(410);
+        return $this->status(400);
     }
 
     private function apply(PreopeningResources $resources, int $id, array $fields): Response
@@ -94,19 +68,6 @@ final class ExecutionController extends PreopeningController
         if (in_array($result->status, ['applied', 'replayed'], true)) return $this->redirect303('/pilot/objects/'.$id.'/execution');
         if ($result->status === 'failed') $this->reportResult((string) $result->reason);
         return $this->status($result->status === 'failed' ? 503 : 422, $result->status === 'failed');
-    }
-
-    private function open(PreopeningResources $resources, int $id, array $fields): Response
-    {
-        if (!$this->cap('installation.open')) return $this->status(403);
-        $applicationId = $this->positive($fields['applicationId'] ?? null);
-        if ($applicationId === null) return $this->status(400);
-        $result = C\ProductionOriginalOpeningFactory::create($resources->db, $resources->prefix)->openInstallation($id, $fields['actualStartDate'] ?? '', $applicationId, $this->actor());
-        if ($result['accepted']) return $this->redirect303('/pilot/objects/'.$id.'/execution');
-        $reason = $result['reasonCode'] ?? '';
-        $unavailable = in_array($reason, ['dependency_unavailable', 'persistence_outcome_unknown'], true);
-        if ($unavailable) $this->reportResult($reason);
-        return $this->status($unavailable ? 503 : 422, $unavailable);
     }
 
     private function reportResult(string $reason): void

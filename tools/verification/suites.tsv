@@ -24,6 +24,8 @@ db	php	tests/AssignmentOrderComposition/original_application_reference_001_test.
 db	php	tests/AssignmentOrderComposition/original_application_reference_issuer_001_test.php	integration
 db	php	tests/AssignmentOrderComposition/original_history_download_001_test.php	integration
 db	php	tests/AssignmentOrderComposition/original_ready_queue_manual_test.php	integration
+db	php	tests/AssignmentOrderComposition/original_start_001_test.php	integration
+db	php	tests/AssignmentOrderComposition/original_start_concurrency_001_test.php	integration
 db	php	tests/AssignmentOrderComposition/original_upload_http_admission_001_test.php	integration
 db	php	tests/AssignmentOrderComposition/original_upload_http_bounds_001_test.php	integration
 db	php	tests/AssignmentOrderComposition/original_upload_http_flow_001_test.php	integration
@@ -125,6 +127,7 @@ db	php	tests/InstallationProcess/object_detail_snapshot_schema_native_false_001_
 db	php	tests/InstallationProcess/object_detail_snapshot_schema_observer_001_test.php	integration
 db	php	tests/InstallationProcess/object_details_editing_mariadb_001_test.php	integration
 db	php	tests/InstallationProcess/object_details_effective_consumers_001_test.php	integration
+db	php	tests/InstallationProcess/original_start_schema_001_test.php	integration
 db	php	tests/InstallationProcess/otiz_current_progress_001_test.php	integration
 db	php	tests/InstallationProcess/otiz_object_decision_migration_20261030_test.php	integration
 db	php	tests/InstallationProcess/otiz_settlement_schema_001_test.php	integration
@@ -290,6 +293,7 @@ db	php	tests/Yii2/yii2_object_details_editing_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration
 db	php	tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php	integration
+db	php	tests/Yii2/yii2_original_start_http_001_test.php	integration
 db	php	tests/Yii2/yii2_original_transport_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_commands_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_concurrency_001_test.php	integration
@@ -374,6 +378,7 @@ e2e	php	tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php	
 e2e	php	tests/Yii2/yii2_object_details_editing_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_object_queue_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_original_object_identity_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_original_start_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php	e2e
@@ -592,6 +597,7 @@ unit	php	tests/Yii2/yii2_inspection_planning_002_test.php	integration
 unit	php	tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php	integration
 unit	php	tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
+unit	php	tests/Yii2/yii2_original_start_metadata_001_test.php	unit
 unit	php	tests/Yii2/yii2_otiz_settlement_v2_001_test.php	integration
 unit	php	tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit
