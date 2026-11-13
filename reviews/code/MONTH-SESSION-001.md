@@ -26,3 +26,15 @@ The browser regression uses the real Yii login and protected route, closes and r
 The retained RED evidence fails on the former seven-day cookie lifetime. The supplied focused run is GREEN for `yii2_month_session_001_test.php` and `yii2_session_failure_001_test.php` at executable source `14df5746dd0ea1da84c8d96d0dbcbea7dcc7fdaa6514caaa7d375fa141264b28`; `git diff --check` and PHP lint are clean. The review did not repeat the focused run because the local checkout lacks its container-only dependencies, and it did not run the prohibited local full suite.
 
 Remaining limits: old cookies receive the new lifetime and policy only on the next login; browser privacy policies that suppress cookies are not bypassed. Gate 3 and canonical exact-source full CI were explicitly deferred for this production-first route. The harness therefore continues to report CI/admission as `UNKNOWN`, and this review must not be used as automated admission or a full-matrix GREEN claim.
+
+## PR #292 integration delta review — 13 November 2026
+
+Reviewer: `/root/month_session_final_review` (independent; no authorship of this root-authored test correction)
+
+Verdict: **APPROVED** for candidate source `4f38f82fc8e4b3de5cf86330983ddc262f361cb75cdf640fd45dd7abe222e467` and executable source `718131f4b3d980d149d7f49d9caf1cd1970743b8ba639a6f10e1cd7dbe59d945`, prepared in `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20261113T142908Z-01d40309f5/package.json`.
+
+No unresolved findings. Against the previously reviewed commit `dd08855c1da160b3ad855ee6825cc8eeac2903f3`, the executable delta changes only the stale authentication regression expectation from `SameSite=Strict` to the approved `SameSite=Lax` contract. It retains the same real login seam and the adjacent cookie path, `HttpOnly`, HTTP `Secure` omission, session rotation, password-hash, throttling, authorization, and asset assertions. The verification input adds this existing registered test to the candidate boundary, and the delivery record preserves the integration history; neither changes production behavior.
+
+The complete first CI run `43439035233` showed one failed job/category and one `REGRESSION_FAILURE`, at `tests/Yii2/yii2_authentication_001_test.php:84`, because the runtime correctly emitted Lax while the assertion still required Strict. All other categories and the other integration shard passed. The corrected focused authentication test is GREEN in the integration profile with exit 0 at executable source `718131f4b3d980d149d7f49d9caf1cd1970743b8ba639a6f10e1cd7dbe59d945`; `git diff --check` is clean.
+
+This delta approval does not turn the failed first run into GREEN. The replacement exact-source full CI run remains required before merge, and its result must be evaluated independently.

@@ -20,3 +20,7 @@ RED: настоящий login выдавал cookie7дней и новый regre
 Live effective Yii: timeout/lifetime2592000, SameSiteLax, Secure/HttpOnly/strict IDs true, autoLoginfalse. Внешний `/pilot/login` HTTP200 выдаёт `Max-Age=2592000; path=/pilot; secure; HttpOnly; SameSite=Lax`, `/health/ready`200. PHP/web/db/оба jobs healthy. Cookie values/session payloads не опубликованы. Старые cookie обновляются при следующем входе; пользователь уведомлён об однократном повторном входе.
 
 Primary evidence вне Git: `~/.local/share/fmonitor-2/month-session-20261113/` (`red.log`, `focused.log`, `preflight.json`, `deploy-result.json`, `live-verification.json`). Post-review additions — только review/delivery/current-goal records; reviewed config/test bytes не менялись. Source сохранён отдельной веткой `codex/persistent-month-session`, merge/fullCI не выполнялись.
+
+## Git integration 13 November 2026
+
+Owner explicitly requested PRs through merge. PR292 initial head dd08855c1da160b3ad855ee6825cc8eeac2903f3, full CI43439035233: fast, unit, governance, e2e and integration2 passed; integration1 had exactly one regression, yii2_authentication_001_test.php expected obsolete SameSite Strict. Complete failed jobs/regression logs retained outside Git at ~/.local/share/fmonitor-2/pr292-293-20261113/. Root updates that expectation to contract Lax; no production code delta. Independent delta review and exact-source CI remain required before merge. Previous deferred-gate record is historical, not current CI approval.

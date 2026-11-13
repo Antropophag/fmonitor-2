@@ -2,13 +2,14 @@
   "change": "persistent-month-session",
   "planned_paths": [
     "config/yii/web.php",
-    "specs/MONTH-SESSION-001.md",
-    "docs/operations/month-session-20261113.md",
-    "docs/operations/month-session-20261113-verification.json",
     "docs/operations/current-delivery-goal.md",
-    "tests/Yii2/yii2_month_session_001_test.php",
-    "tests/Yii2/month_session_browser.mjs",
+    "docs/operations/month-session-20261113-verification.json",
+    "docs/operations/month-session-20261113.md",
+    "specs/MONTH-SESSION-001.md",
     "tests/Runtime/production_runtime_admin_browser.mjs",
+    "tests/Yii2/month_session_browser.mjs",
+    "tests/Yii2/yii2_authentication_001_test.php",
+    "tests/Yii2/yii2_month_session_001_test.php",
     "tools/verification/suites.tsv"
   ],
   "acceptances": [
