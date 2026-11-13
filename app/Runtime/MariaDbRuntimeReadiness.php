@@ -66,6 +66,7 @@ final class MariaDbRuntimeReadiness
                 Schema\OtizPublicationSchemaMigration::class,
                 Schema\OtizEvidenceSchemaMigration::class,
                 Schema\DeadlineTransferCertificateSchemaMigration::class,
+                Schema\AssignmentOrderOriginalStartSchemaMigration::class,
             ] as $schema) {
                 if (!$schema::isCompleteCompatible($connection, $prefix)) throw new \RuntimeException();
             }

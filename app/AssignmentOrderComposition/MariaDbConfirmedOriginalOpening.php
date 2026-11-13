@@ -8,11 +8,17 @@ final readonly class MariaDbConfirmedOriginalOpening
 {
     public function __construct(private MariaDbAssignmentOrderApplicationSql $sql,private SelectionClock $clock) {}
     public function openConfirmedOriginal(OpenConfirmedOriginalCommand $c):array
+    {return $this->open($c,false);}
+    /** Signed appendix dates are persisted by OriginalStartOwner and may be future or precede document date. */
+    public function openPersistedOriginal(OpenConfirmedOriginalCommand $c):array
+    {return $this->open($c,true);}
+    private function open(OpenConfirmedOriginalCommand $c,bool $persistedStart):array
     {
         $failure=static fn(string $reason):array=>['accepted'=>false,'reasonCode'=>$reason];
-        if(!$this->valid($c))return$failure('invalid_command');$s=$this->sql;$owned=false;$committing=false;
+        if(!$this->valid($c,$persistedStart))return$failure('invalid_command');$s=$this->sql;$owned=false;$committing=false;
         try {
             if(!$s->idle())return$failure('dependency_unavailable');
+            if($persistedStart){$signed=$s->rows('SELECT s.request_id FROM '.$s->table('fm2_assignment_order_original_starts').' s JOIN '.$s->table('fm2_assignment_order_original_revisions').' v ON v.request_id=s.request_id WHERE s.request_id=? AND v.revision_id=? AND s.appendix_start_date=?',[$c->requestId,$c->originalRevisionId,$c->actualStartDate]);if(count($signed)!==1)return$failure('original_unavailable');}
             $originals=O\AssignmentOrderOriginalApplicationReferenceFactory::create($s->db,$s->prefix);
             $applicationOperation=new MariaDbAssignmentOrderApplicationOperation($s,$originals);
             if(!$applicationOperation->authorized($c->actorId,false,'installation.open'))return$failure('authorization_denied');
@@ -21,7 +27,7 @@ final readonly class MariaDbConfirmedOriginalOpening
             $reference=$lookup->reference;$metadata=$reference->metadata();
             if($metadata['revisionId']!==$c->originalRevisionId)return$failure('original_changed');
             $instant=$this->clock->now();if($instant->status!==SelectionLookupStatus::FOUND||$instant->payload===null)return$failure('dependency_unavailable');$at=$instant->payload;
-            $today=SelectionScalar::selectionDate($at);if($c->actualStartDate>$today||$c->actualStartDate<$metadata['documentDate'])return$failure('actual_start_before_order_or_future');
+            $today=SelectionScalar::selectionDate($at);if(!$persistedStart&&($c->actualStartDate>$today||$c->actualStartDate<$metadata['documentDate']))return$failure('actual_start_before_order_or_future');
             $fingerprint=hash('sha256',SelectionScalar::json([$c->requestId,$c->objectId,$c->orderId,$c->originalRevisionId,$c->expectedApplicationSequence,$c->actualStartDate,$c->actorId]));
             if(!$s->db->query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED')||!$s->db->begin_transaction())throw new \RuntimeException('dependency_unavailable');$owned=true;
             $cases=$s->rows('SELECT * FROM '.$s->table('fm2_installation_cases').' WHERE legacy_installation_object_id=? FOR UPDATE',[$c->objectId]);
@@ -49,7 +55,7 @@ final readonly class MariaDbConfirmedOriginalOpening
                 $application=$result->application;
             }
             $opening=new MariaDbOriginalOpening($s->db,$s->prefix,$this->clock);
-            $result=$opening->openPreparedWithinTransaction($c->objectId,$c->actualStartDate,$application['applicationId'],$c->actorId,$application,$originals,$reference,$at,['requestId'=>$c->requestId,'fingerprint'=>$fingerprint]);
+            $result=$opening->openPreparedWithinTransaction($c->objectId,$c->actualStartDate,$application['applicationId'],$c->actorId,$application,$originals,$reference,$at,['requestId'=>$c->requestId,'fingerprint'=>$fingerprint],$persistedStart);
             $committing=true;if(!$s->db->commit())throw new \RuntimeException();$owned=false;return$result;
         }catch(\Throwable $e){
             if($owned)try{$s->db->rollback();}catch(\Throwable){$committing=true;}
@@ -57,10 +63,13 @@ final readonly class MariaDbConfirmedOriginalOpening
             return$failure($committing?'persistence_outcome_unknown':(in_array($e->getMessage(),$allowed,true)?$e->getMessage():'dependency_unavailable'));
         }
     }
-    private function valid(OpenConfirmedOriginalCommand $c):bool
+    private function valid(OpenConfirmedOriginalCommand $c,bool$persistedStart):bool
     {
+        $requestPattern=$persistedStart
+            ?'/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D'
+            :'/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D';
         return$c->objectId>0&&$c->orderId>0&&$c->actorId>0&&$c->expectedApplicationSequence>=0&&$c->expectedApplicationSequence<=2147483647&&SelectionScalar::date($c->actualStartDate)
-            &&preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$c->requestId)===1
+            &&preg_match($requestPattern,$c->requestId)===1
             &&preg_match('/^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/D',$c->originalRevisionId)===1;
     }
 }

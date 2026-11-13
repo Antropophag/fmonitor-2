@@ -43,6 +43,11 @@ final class PreopeningResources
             'factoryNumber' => $details['zavnumber']['display'] ?? null,
         ];
     }
+    public function plannedStartDate(int $objectId): ?string
+    {
+        return (new I\MariaDbLegacyInstallationObject($this->db, $this->prefix))
+            ->getInstallationObjectSnapshot($objectId)['plannedStartDate'];
+    }
     public function assignEngineer(I\ControlEngineerAssignmentCommand $command):array{return I\ProductionControlEngineerAssignmentFactory::create($this->db,$this->prefix)->assign($command);}
     public function editObjectDetails(I\ObjectDetailsEditCommand$command):array{return I\ProductionObjectDetailsEditFactory::create($this->db,$this->prefix,static fn():string=>(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z'))->edit($command);}
     public function selectAssignmentOrderComposition(C\SelectAssignmentOrderCompositionCommand $command): array
@@ -64,6 +69,14 @@ final class PreopeningResources
         $fresh=new O\AssignmentOrderOriginalMariaDbFreshTerminalReaderFactory($config);$probe=$fresh->open();
         if($probe->status!==O\AssignmentOrderOriginalFreshReaderOpenStatus::OPENED||$probe->reader===null||$probe->reader->close()!==O\AssignmentOrderOriginalFreshReaderCloseStatus::CLOSED)throw new \RuntimeException();
         return O\ProductionAssignmentOrderOriginalFactory::createForSelections($this->db,new O\AssignmentOrderOriginalProductionConfig((string)getenv('FMONITOR_ARTIFACT_STORAGE_ROOT'),$this->prefix,(string)getenv('FMONITOR_ORIGINAL_SAFE_LOG_FILE')),$fresh);
+    }
+    public function originalStart(): C\MariaDbOriginalStartOwner
+    {
+        return C\ProductionOriginalStartFactory::create($this->db, $this->prefix, $this->original());
+    }
+    public function originalStartQuery(): C\MariaDbOriginalStartQuery
+    {
+        return C\ProductionOriginalStartQueryFactory::create($this->db, $this->prefix);
     }
     public function close():void{$this->db->close();}
 }

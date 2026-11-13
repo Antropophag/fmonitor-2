@@ -1,3 +1,23 @@
+# Текущая цель — PR292 и PR293 до merge в main
+
+Поручение владельца13 ноября2026: оформить последние production-first правки и довести обе ветки до merge. Это явное разрешение на PR/push/merge после независимого ревью и полного exact-source CI; новый production deployment/reset данных не входит. Работа ведётся в отдельных worktrees persistent-month-session и actual-start-from-assignment-order. Navigation checkout read-only.
+
+PR292 — месячная сессия, PR293 — начало по приложению распоряжения. Первые CI полностью разобраны: PR292 один устаревший SameSite Strict тест; PR29360 regressions преимущественно через общий fixture без appendixStartDate, старый ручной open, точные schema/asset inventories. Root адаптирует tests, sol/low executor исправил совместимость composite UUID1–5/PDF reasons, independent review сохраняется. Полный локальный make test/verify запрещён; используются focused checks и существующий GitHub full consumer. Исторический production-first/deferred статус ниже не означает актуальный CI GREEN.
+
+---
+
+# Текущая цель — фактическое начало по подписанному распоряжению
+
+Поручение владельца 13 ноября 2026: фактическое начало берётся из графы «Дата начала работ» приложения к распоряжению; принятый подписанный оригинал автоматически открывает работы без отдельного ввода даты стройконтролем. Владелец планирует очистку и повторную загрузку объектов; backfill прежних дат не нужен, очистка ещё не выполняется.
+
+Рабочий worktree: `fmonitor-2-actual-start-from-assignment-order`. [Подтверждённые решения и исследование](actual-start-from-assignment-order-20261113.md). Владелец подтвердил: **открыть сразу**, включая будущую дату из приложения. Все продуктовые развилки закрыты; реализуется `openspec/changes/actual-start-from-assignment-order`, контракт `specs/ACTUAL-START-FROM-ORDER-001.md`. Реализация и независимое final review завершены; scoped production deployment выполнен13 ноября. Новая schema39 добавлена без изменения105 прежних таблиц,22 source files подтверждены по hashes; внешний ready/login200 и все5 healthchecked сервисов healthy. База не очищалась. В Git фиксируется delivery checkpoint; formal Gate3/fullCI/automated admission остаются owner-deferred/UNKNOWN.
+
+Действует заданный владельцем в текущей беседе режим production-first с отложенной обычной последовательностью гейтов; root пишет контракт/tests, отдельный sol/low executor реализует, независимый final review и focused checks сохраняются. Полный локальный `make test`/`make verify` запрещён. Старые worktrees, данные и история сохраняются.
+
+Предыдущая очередь ниже — история, не scope текущего поручения.
+
+---
+
 # Текущая цель — месячная сессия и вход по внешним ссылкам
 
 Owner13 ноября2026 запросил исправить потерю входа по external link и сделать session lifetime месяц (30суток). Worktree `fmonitor-2-persistent-month-session`, контракт `specs/MONTH-SESSION-001.md`, [delivery record](month-session-20261113.md). Scope только session config и регрессии; production-first режим текущей беседы, focused checks и independent final review. Gate3/fullCI owner-deferred; full local make test/verify запрещён. Старые session files, keys, users и прежние production patches сохраняются. Поставка выполнена13.11.2026 16:49МСК: один config-файл, independent final review APPROVED, focused browser/session-failure GREEN, live cookie30дней/Lax/Secure/HttpOnly и health200. Новые параметры старой cookie применяются при следующем входе. Gate3/fullCI остаются отложенными.
@@ -6,7 +26,7 @@ Owner13 ноября2026 запросил исправить потерю вхо
 
 ---
 
-# Текущая цель — провести production-изменения через Git и CI
+# Предыдущая цель — провести production-изменения через Git и CI
 
 Поручение владельца 2026-11-10: собрать все фактически работающие production-изменения в Git, дополнить тесты, пройти независимые ревью и полный exact-source GitHub CI. Предыдущий режим экстренной поставки не освобождает этот интеграционный candidate от проверок.
 

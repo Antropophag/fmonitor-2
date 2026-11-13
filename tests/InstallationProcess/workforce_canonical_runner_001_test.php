@@ -290,7 +290,7 @@ try {
     $cleanTables = array_column(wcrRows($connection, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$prefix25}fm2\\_%' ORDER BY BINARY TABLE_NAME"), 'TABLE_NAME');
     assertSameValue(
         [
-            'result' => ['exitCode' => 0, 'stdout' => "{\"ok\":true,\"schemaVersion\":38,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]}\n", 'stderr' => ''],
+            'result' => ['exitCode' => 0, 'stdout' => "{\"ok\":true,\"schemaVersion\":39,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]}\n", 'stderr' => ''],
             'tables' => array_map(static fn (string $table): string => $prefix25 . $table, [
                 'fm2_assignment_application_attempts',
                 'fm2_assignment_order_applications',
@@ -301,6 +301,7 @@ try {
                 'fm2_assignment_order_original_requests',
                 'fm2_assignment_order_original_revisions',
                 'fm2_assignment_order_original_roots',
+                'fm2_assignment_order_original_starts',
                 'fm2_assignment_order_selection_audits',
                 'fm2_assignment_order_selection_events',
                 'fm2_assignment_order_selection_members',
@@ -389,7 +390,7 @@ try {
             ]),
         ],
         ['result' => $cleanResult, 'tables' => $cleanTables],
-        'A clean exact 25-byte composed prefix must reach ordered canonical v29 and create the full literal catalogue.',
+        'A clean exact 25-byte composed prefix must reach ordered canonical v39 and create the full literal catalogue.',
     );
     wcrAssertExactV5($connection, $prefix25);
     wcrAssertFreshV5Rows($connection, $prefix25);
@@ -400,7 +401,7 @@ try {
     $connection->query("INSERT INTO `{$prefix25}fm2_workforce_observations` (sync_run_id,delivery_person_id,employee_number,full_name,position,employment_status,employed_from,dismissal_effective_at,authority_system,delivery_system,source_modified_at,reconciliation_state,observed_at,dismissal_time_quality) VALUES ('11111111-1111-1111-1111-111111111111',1042,1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup','bitrix','2026-09-02T07:59:00+03:00','delivered','2026-09-02T08:01:00+03:00','observed_only')");
     $connection->query("UPDATE `{$prefix25}fm2_workforce_sync_metadata` SET last_successful_run_id='11111111-1111-1111-1111-111111111111',last_successful_at='2026-09-02T08:02:00+03:00' WHERE singleton_id=1");
     $repeatBefore = wcrState($connection);
-    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":38,\"appliedVersions\":[]}\n"], wcrRun($environment), 'Completed populated current-frontier repeat must report no applied versions.');
+    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":39,\"appliedVersions\":[]}\n"], wcrRun($environment), 'Completed populated current-frontier repeat must report no applied versions.');
     assertSameValue($repeatBefore, wcrState($connection), 'Completed repeat preserves every v1-v5 definition and row byte-for-byte.');
     $connection->query("DROP TABLE `{$prefix25}fm2_pilot_completion_fact_corrections`");$connection->query("DROP TABLE `{$prefix25}fm2_pilot_completion_facts`");
 
@@ -410,7 +411,7 @@ try {
     $connection->query("INSERT INTO `{$partialPrefix}fm2_workforce_sync_runs` (run_id,status,started_at) VALUES ('22222222-2222-2222-2222-222222222222','started','2026-09-02T10:00:00+03:00')");
     $connection->query("DROP TABLE `{$partialPrefix}fm2_workforce_observations`");
     $partialBefore = wcrState($connection);
-    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":38,\"appliedVersions\":[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]}\n"], wcrRun(wcrEnvironment($database, $partialPrefix)), 'Compatible v5 partial state must recover through current successors.');
+    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":39,\"appliedVersions\":[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]}\n"], wcrRun(wcrEnvironment($database, $partialPrefix)), 'Compatible v5 partial state must recover through current successors.');
     wcrAssertExactV5($connection, $partialPrefix);
     $partialAfter = wcrState($connection);
     foreach ($partialBefore as $table => $state) {

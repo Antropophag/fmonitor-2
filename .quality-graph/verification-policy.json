@@ -839,6 +839,34 @@
         "tests/Yii2/yii2_object_queue_001_test.php"
       ],
       "consumers": []
+    },
+    {
+      "name": "assignment-original-start-opening",
+      "patterns": [
+        "app/AssignmentOrderComposition/*OriginalStart*.php",
+        "app/AssignmentOrderComposition/MariaDbConfirmedOriginalOpening.php",
+        "app/AssignmentOrderComposition/MariaDbOriginalOpening.php",
+        "app/AssignmentOrderComposition/MariaDbAssignmentOrderApplicationOperation.php",
+        "app/InstallationProcess/AssignmentOrderOriginalStartSchemaMigration.php",
+        "app/YiiRuntime/Controllers/OriginalController.php",
+        "app/YiiRuntime/Controllers/ExecutionController.php",
+        "app/YiiRuntime/Controllers/OriginalHistoryController.php",
+        "app/YiiRuntime/Models/OriginalMetadata.php",
+        "app/YiiRuntime/PreopeningResources.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV39.php"
+      ],
+      "verifiers": [
+        "tests/AssignmentOrderComposition/confirmed_original_opening_001_test.php",
+        "tests/InstallationProcess/assignment_order_original_schema_v2_001_test.php",
+        "tests/Yii2/yii2_preopening_browser_001_test.php",
+        "tests/AssignmentOrderComposition/original_start_001_test.php",
+        "tests/InstallationProcess/original_start_schema_001_test.php",
+        "tests/Yii2/yii2_original_start_metadata_001_test.php",
+        "tests/Yii2/yii2_original_start_browser_001_test.php"
+      ],
+      "consumers": [
+        "canonical-migration-frontier"
+      ]
     }
   ],
   "full_argv": [

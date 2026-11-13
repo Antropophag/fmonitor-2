@@ -41,7 +41,8 @@ class Contract(unittest.TestCase):
   for p in (ROOT/"openspec/changes").glob("*/verification-input.json"):
    for a in json.loads(p.read_text()).get("acceptances",[]):
     refs.extend((p,t) for t in a.get("tests",[]));refs.extend((p,t) for t in a.get("gate3_expected",{}))
-  self.assertEqual([],[(p,t) for p,t in refs if t==WRAPPER]);self.assertTrue(any(t==CANONICAL for _,t in refs));base=subprocess.check_output(["git","show","62d027d54af7a01a1da300eda2901ba68b2bab20:"+CANONICAL],cwd=ROOT);self.assertEqual(base,(ROOT/CANONICAL).read_bytes())
+  # Approved automatic-opening contract updates the witness; keep exact bytes and single selection.
+  self.assertEqual([],[(p,t) for p,t in refs if t==WRAPPER]);self.assertTrue(any(t==CANONICAL for _,t in refs));base=subprocess.check_output(["git","show","5dc2c8852d465885c33160faee1fd2ec0e4ee50f:"+CANONICAL],cwd=ROOT);self.assertEqual(base,(ROOT/CANONICAL).read_bytes())
  def test_a2_pr_run_appearing_within_bound_is_reused(self):
   r,g,_=self.decide([[],[run()]]);self.assertEqual(("REUSE",77,2,0),(r["decision"],r["run"]["id"],g.list_calls,g.dispatches))
  def test_a2_completed_requires_admission_and_single_run_jobs(self):

@@ -88,7 +88,7 @@ return [
         'users.js'=>['13684f3f52349b8b9aca995af7c903f1ec2ae408db78e49377fcc117790f953b','text/javascript; charset=UTF-8','public, max-age=3600'],
         'object-queue.js'=>['6fec7a86338bde442d3aaedaa674d032aed17d2b801b9d02d4e5ded69ead35d5','text/javascript; charset=UTF-8','public, max-age=3600'],
         'inspection-schedule.js'=>['3c788a10850497b73e733cc0df6d0a7a7ed19f213d1654d5d062e525eae22972','text/javascript; charset=UTF-8','public, max-age=3600'],
-        'preopening.js'=>['9d2cdd1c3d825f7082627a9396f59076a86c2ef1b6d842398a271d54bea15548','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'preopening.js'=>['84eca7f7cc9926a707bda6f7e0ec408a707a8a349e05ff56b270e037967c3e6a','text/javascript; charset=UTF-8','public, max-age=3600'],
         'template-offer.js'=>['cd6e13f6b5c23ba0e341d899a8876dae45ebeb2ad7f4475eb8c532511aa049e3','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist.js'=>['6b9ab656c60f4581f84f73be8ca20e04bd7b6c20dfa3719a2317282f5f8abb4b','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist-sw.js'=>['be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f','text/javascript; charset=UTF-8','public, max-age=0'],

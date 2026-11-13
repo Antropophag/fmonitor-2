@@ -93,3 +93,12 @@ foreach([false,true] as $correct){
         echo $correct?"PASS confirmed corrected original reapplication and opening\n":"PASS confirmed existing application opening\n";
     }finally{$f->close();}
 }
+
+// The signed-start continuation must not broaden the legacy standalone command contract.
+foreach([1,2,3,5]as$version){
+ [$f,$original,$clock]=cooSetup();try{
+  $db=$f->selection->db;$before=cooSnapshot($db);
+  $r=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('55555555-5555-'.$version.'555-8555-000000000099',$original));
+  assertSameValue([false,'invalid_command'],[$r['accepted'],$r['reasonCode']],'standalone opening rejects UUID v'.$version);assertSameValue($before,cooSnapshot($db),'standalone UUID refusal leaves facts unchanged');
+ }finally{$f->close();}
+}
