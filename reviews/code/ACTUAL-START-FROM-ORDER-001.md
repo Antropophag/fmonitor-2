@@ -77,3 +77,21 @@ Every merged product and test blob is byte-identical to its approved parent. The
 The combined verification input includes both contracts, all PR292 planned paths, and the MONTH-SESSION-001 A1–A5 mapping alongside the unchanged ACTUAL-START-FROM-ORDER-001 mappings. The original-start delivery record adds only the stacked-head/integration explanation. `missing_tests` is empty and `git diff --check` is clean.
 
 `combined-browser.log` records both `yii2_month_session_001_test.php` and `yii2_original_start_browser_001_test.php` passing together at executable source `2148cc5830b3bb530949b5f3c6eab5ce384ddde3a61983a21bc09c90aa455b09`. This confirms the composed session configuration and signed-start browser fixtures coexist. This review does not repeat either already-approved feature review, claim automated admission, or call the required exact-source full GitHub CI GREEN.
+
+## Second full-CI fixture correction — independent final review
+
+- Reviewer: `/root/pr_test_closure`; authored none of this correction.
+- Review base: `e944af12e2adbc8a62aea1a2a111f7c6aca09b47`.
+- Frozen patch SHA-256: `adcae4e543d4f53a5994bd9b1b3f31de365970370c521e73d5e7c1957a6d23a7`.
+- Exact candidate source: `baf2817917f92d529472e3cd49d0d2c91b2133ed6a1e34a2a24e852c135d5bfe`.
+- Focused executable source: `251e60363e8407c07a05211b1df7e9efc2e36078e6b207acffb159b765a9c6ed`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20261113T153000Z-f8f174764f/package.json`.
+- Verdict: **APPROVED** for the complete frozen five-file test/record delta; no findings.
+
+The complete failed-run inventory contains exactly the three addressed regressions. The governance correction advances only the exact canonical browser witness to approved source `5dc2c8852d465885c33160faee1fd2ec0e4ee50f`; the current browser file is byte-identical to that witness. Single inventory registration, wrapper absence, acceptance mapping, run reuse, dispatch bounds, admission and correction-package assertions remain unchanged. `deduplication-final.log` records all ten governance tests passing.
+
+The Excel fixture now proves the second public upload creates exactly one latest application and binds it to the accepted original revision. A third public upload is forced into an application-insert failure, returns the exact retryable `pending`/`dependency_unavailable` envelope, and retains an addressable original revision. The trigger is removed in `finally`; both prior application rows remain byte-identical, and the financial reader plus `excelInputsProof` continue to resolve the previous latest applied application. This preserves the pending-evidence versus applied-financial-source boundary through the current public seam.
+
+The domain correction keeps `not_pdf` as the exact reason and compares every accepted/business fact before and after rejection. Its file allowance is closed: exactly the empty stages/finalized state JSON, one empty state lock and one empty content-exclusion lock are permitted, with no staged or finalized PDF. The following wrong-object denial compares the complete post-rejection snapshot, so the housekeeping exception is not generalized. `final-fixtures.log` records both the domain and OTIZ tests passing at executable source `251e60363e8407c07a05211b1df7e9efc2e36078e6b207acffb159b765a9c6ed`.
+
+The verification input adds the two newly changed support/governance files, the delivery record accurately inventories the run and correction, `missing_tests` is empty, and `git diff --check` is clean. No product code or policy/workflow implementation changed. A new exact-source full GitHub CI run on current main remains required; this review does not claim automated admission or full-CI GREEN.

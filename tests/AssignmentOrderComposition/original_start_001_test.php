@@ -96,7 +96,11 @@ $f=new F();try{
     $r=$f->owner()->submit($f->command(),4512,'2026-09-20');assertSameValue(true,in_array($r['status'],['accepted','replayed'],true),'exact retry rechecks restored authority');assertSameValue(1,$f->openingCount(),'revocation retry opens once');
 }finally{$f->close();}
 $f=new F();try{
-    $before=$f->snapshot();$r=$f->owner()->submit($f->command(1,'not a PDF'),4512,'2026-09-20');assertSameValue('rejected',$r['status'],'unsafe/non-PDF rejected by original owner');assertSameValue($before,$f->snapshot(),'invalid PDF does not open or persist original');
+    $before=$f->snapshot();$r=$f->owner()->submit($f->command(1,'not a PDF'),4512,'2026-09-20');assertSameValue(['rejected','not_pdf'],[$r['status'],$r['reasonCode']],'non-PDF rejected by original owner');
+    $after=$f->snapshot();$beforeFacts=$before;$afterFacts=$after;unset($beforeFacts['files'],$afterFacts['files']);assertSameValue($beforeFacts,$afterFacts,'invalid PDF changes no accepted original or process facts');
+    $locks=array_values(array_filter(array_keys($after['files']),static fn(string$name):bool=>preg_match('/^\.lock-[0-9a-f]{64}$/D',$name)===1));assertSameValue(1,count($locks),'only one original-owner exclusion lock remains');
+    $expectedFiles=['.aoou-state.json'=>hash('sha256','{"stages":[],"finalized":[]}'),'.aoou-state.lock'=>hash('sha256',''),$locks[0]=>hash('sha256','')];ksort($expectedFiles);assertSameValue($expectedFiles,$after['files'],'only empty storage metadata and locks remain, no staged or finalized PDF');
+    $before=$after;
     $r=$f->owner()->submit($f->command(2),9999,'2026-09-20');assertSameValue(true,in_array($r['status'],['rejected','conflict'],true),'object identity cannot be substituted');assertSameValue($before,$f->snapshot(),'wrong object leaves business facts untouched');
 }finally{$f->close();}
 echo "PASS ACTUAL-START-FROM-ORDER-001 domain acceptance\n";
