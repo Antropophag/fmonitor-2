@@ -47,3 +47,18 @@ The fixture changes migrate current upload flows to the public signed-upload sea
 Retained evidence includes the complete initial 60-failure inventory and all intermediate failures. The final focused logs cover transport receipts/roles/bytes, browser behavior, lineage and cutover, current recovery, architecture/HTTP qualification, and the production nginx/FPM browser lifecycle. `uuid-final.log` records exit 0 for the persisted UUID v1/v2/v3/v5 and standalone-negative matrix at executable source `01ab2ae90c523c60b47d42f7439a3f0d04156b50f4416fb383f032f4b2756c9d`. `git diff --check` is clean.
 
 This review is independent substantive review, not harness automated admission: the historical focused evidence was retained as complete logs rather than native per-command reviewer records. A new exact-source full GitHub CI run is still pending and is not called GREEN here. This verdict does not approve deployment, data reset, or any source beyond the frozen PR293 correction delta.
+
+## Short-payload transport correction — independent final delta review
+
+- Reviewer: `/root/pr_test_closure`; authored none of this delta.
+- Review base: `6dae29513f1f9508c0448632cfd8175e686d0e39`.
+- Frozen patch SHA-256: `1f4fed025d01cb415b7068723254fc7da78ffbd3fe61d3aee8fabf5fef5ea108`.
+- Exact candidate source: `df57165afffe4319f52966a4263db309cd10dc60d13925028d98ac1b7212c4be`.
+- Focused executable source: `9da95ea58db442198a44f714723a30ced1202cef5c67ad576c435af3f6b83a34`.
+- Verdict: **APPROVED** for this frozen three-file delta; no findings.
+
+The correction preserves every complete payload, including empty and one-byte input, for classification by the original owner. Technical stream failure, an empty non-EOF chunk, and payloads over 20 MiB still return the composite technical-failure sentinel. Payload SHA-256, size and the common semantic fingerprint are computed before replay resolution for every complete payload. An existing accepted request therefore rejects a changed one-byte payload as `request_id_conflict` with the exact facts unchanged.
+
+New short payloads skip only insertion into `fm2_assignment_order_original_starts`, whose schema requires a byte size of at least five, and continue through the original owner to its established `not_pdf` receipt. No opening can follow because only accepted or replayed original results proceed to canonical start lookup. The existing transport corpus retains `unsafe_pdf`, ordinary `not_pdf`, exact replay, receipt shape, authorization, persistence failure and the exact 20 MiB boundary; the new cases add one-byte `not_pdf` and changed-payload replay protection.
+
+Retained RED evidence records the former 503 misclassification and the rejected first fix that allowed an accepted request to borrow a changed short payload. `short-pdf-final.log` records the complete transport test passing at executable source `9da95ea58db442198a44f714723a30ced1202cef5c67ad576c435af3f6b83a34`. `git diff --check` is clean. Exact-source full GitHub CI remains required and is not called GREEN by this delta review.

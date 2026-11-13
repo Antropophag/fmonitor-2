@@ -24,14 +24,14 @@ final readonly class MariaDbOriginalStartOwner
                 if($prior===null||$prior!==$appendixStartDate)return$out('rejected','appendix_start_changed',false);
             }
             $bytes=$this->bytes($c->upload->stream);if($bytes===null)return$out('failed','dependency_unavailable',true);
+            $copy=new O\SubmitAssignmentOrderOriginalCommand($c->requestId,$c->mode,$c->installationCaseId,$c->assignmentOrderId,$c->actorUserId,$c->documentDate,$c->compositionConfirmed,$c->rootOriginalId,$c->targetRevisionId,$c->expectedCurrentRevisionId,$c->correctionReason,new O\AssignmentOrderOriginalUpload(new O\AssignmentOrderOriginalMemoryStream($bytes),$c->upload->originalFilename,$c->upload->declaredMediaType));
             $sha=hash('sha256',$bytes);$size=strlen($bytes);$fingerprint=$this->fingerprint($c,$objectId,$appendixStartDate,$sha,$size);
             $intent=$this->intent($c->requestId);
             if($intent!==null&&!hash_equals($intent['semantic_fingerprint'],$fingerprint))return$out('conflict','request_id_conflict',false);
-            if($intent===null){
+            if($intent===null&&$size>=5){
                 $instant=$this->clock->now();if($instant->status!==SelectionLookupStatus::FOUND||$instant->payload===null)return$out('failed','dependency_unavailable',true);
                 try{$s->execute('INSERT INTO '.$s->table('fm2_assignment_order_original_starts').' (request_id,installation_case_id,object_id,assignment_order_id,actor_user_id,mode,document_date,appendix_start_date,pdf_sha256,byte_size,semantic_fingerprint,created_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[$c->requestId,$c->installationCaseId,$objectId,$c->assignmentOrderId,$c->actorUserId,$c->mode->value,$c->documentDate,$appendixStartDate,$sha,$size,$fingerprint,self::dbTime($instant->payload->utcRfc3339Seconds)]);}catch(\Throwable){$intent=$this->intent($c->requestId);if($intent===null||!hash_equals($intent['semantic_fingerprint'],$fingerprint))return$out('conflict','request_id_conflict',false);}
             }
-            $copy=new O\SubmitAssignmentOrderOriginalCommand($c->requestId,$c->mode,$c->installationCaseId,$c->assignmentOrderId,$c->actorUserId,$c->documentDate,$c->compositionConfirmed,$c->rootOriginalId,$c->targetRevisionId,$c->expectedCurrentRevisionId,$c->correctionReason,new O\AssignmentOrderOriginalUpload(new O\AssignmentOrderOriginalMemoryStream($bytes),$c->upload->originalFilename,$c->upload->declaredMediaType));
             $receipt=$this->original->submitAssignmentOrderOriginal($copy);
             if(!in_array($receipt->status(),[O\AssignmentOrderOriginalStatus::ACCEPTED,O\AssignmentOrderOriginalStatus::REPLAYED],true))return$out($receipt->status()->value,$receipt->reasonCode()?->value,$receipt->retryable(),$receipt);
             $canonical=$this->canonical((string)$receipt->currentRevisionId());
@@ -74,7 +74,7 @@ final readonly class MariaDbOriginalStartOwner
         if($local)return$s->rows('SELECT u.user_id FROM '.$s->table('fm2_pilot_users').' u JOIN '.$s->table('fm2_pilot_user_roles').' ur ON ur.user_id=u.user_id JOIN '.$s->table('fm2_pilot_roles').' r ON r.role_id=ur.role_id JOIN '.$s->table('fm2_pilot_role_permissions').' p ON p.role_id=r.role_id WHERE u.user_id=? AND u.status=1 AND BINARY u.activation_state=\'active\' AND r.status=1 AND BINARY p.permission=?',[$actor,$permission])!==[];
         return$s->rows('SELECT u.id FROM '.$s->table('users').' u JOIN '.$s->table('users_roles').' r ON r.id=u.role_id JOIN '.$s->table('fm2_process_user_capabilities').' c ON c.user_id=u.id WHERE u.id=? AND u.status=1 AND r.status=1 AND BINARY c.capability=?',[$actor,$permission])!==[];
     }
-    private function bytes(O\AssignmentOrderOriginalByteStream$stream):?string{$bytes='';while(true){$r=$stream->read(65536);if($r->status===O\AssignmentOrderOriginalStreamReadStatus::EOF)break;if($r->status!==O\AssignmentOrderOriginalStreamReadStatus::BYTES||$r->bytes==='')return null;$bytes.=$r->bytes;if(strlen($bytes)>20971520)return null;}return strlen($bytes)>=5?$bytes:null;}
+    private function bytes(O\AssignmentOrderOriginalByteStream$stream):?string{$bytes='';while(true){$r=$stream->read(65536);if($r->status===O\AssignmentOrderOriginalStreamReadStatus::EOF)break;if($r->status!==O\AssignmentOrderOriginalStreamReadStatus::BYTES||$r->bytes==='')return null;$bytes.=$r->bytes;if(strlen($bytes)>20971520)return null;}return$bytes;}
     private function intent(string$request):?array{$r=$this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_starts').' WHERE request_id=?',[$request]);return count($r)===1?$r[0]:null;}
     private function canonical(string$revision):?array{$r=$this->sql->rows('SELECT s.* FROM '.$this->sql->table('fm2_assignment_order_original_revisions').' v JOIN '.$this->sql->table('fm2_assignment_order_original_starts').' s ON s.request_id=v.request_id WHERE v.revision_id=?',[$revision]);return count($r)===1?$r[0]:null;}
     private function startForRevision(string$revision):?string{return$this->canonical($revision)['appendix_start_date']??null;}
