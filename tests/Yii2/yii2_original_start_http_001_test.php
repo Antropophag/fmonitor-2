@@ -38,3 +38,11 @@ $f=new PreopeningFixture(dirname(__DIR__,2));try{
     assertSameValue(1,preg_match('/name="appendixStartDate"[^>]*value=""/',$form['body']),'legacy missing date never substituted from plan');
     echo "PASS original-start legacy history unknown date\n";
 }finally{$f->close();}
+
+foreach([1,2,3,5]as$version){
+ $f=new PreopeningFixture(dirname(__DIR__,2));try{
+  $f->start();$cookies=[];$f->login($cookies);$f->selection($cookies);$m=oshMetadata($f,$cookies);$m['requestId']='17171717-1717-'.$version.'717-8717-000000000001';
+  $r=$f->upload($cookies,$m);assertSameValue(201,$r['status'],'original UUID v'.$version.' opens immediately');assertSameValue(['working','2030-10-09','18'],array_map(static fn($key)=>$f->rows('fm2_installation_cases')[0][$key],['process_state','actual_start_date','opened_by_user_id']),'UUID opening facts');
+  $before=$f->facts();assertSameValue(200,$f->upload($cookies,$m)['status'],'UUID exact replay');assertSameValue($before,$f->facts(),'UUID replay creates no duplicate facts');
+ }finally{$f->close();}
+}

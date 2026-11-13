@@ -1,3 +1,11 @@
+# Текущая цель — PR292 и PR293 до merge в main
+
+Поручение владельца13 ноября2026: оформить последние production-first правки и довести обе ветки до merge. Это явное разрешение на PR/push/merge после независимого ревью и полного exact-source CI; новый production deployment/reset данных не входит. Работа ведётся в отдельных worktrees persistent-month-session и actual-start-from-assignment-order. Navigation checkout read-only.
+
+PR292 — месячная сессия, PR293 — начало по приложению распоряжения. Первые CI полностью разобраны: PR292 один устаревший SameSite Strict тест; PR29360 regressions преимущественно через общий fixture без appendixStartDate, старый ручной open, точные schema/asset inventories. Root адаптирует tests, sol/low executor исправил совместимость composite UUID1–5/PDF reasons, independent review сохраняется. Полный локальный make test/verify запрещён; используются focused checks и существующий GitHub full consumer. Исторический production-first/deferred статус ниже не означает актуальный CI GREEN.
+
+---
+
 # Текущая цель — фактическое начало по подписанному распоряжению
 
 Поручение владельца 13 ноября 2026: фактическое начало берётся из графы «Дата начала работ» приложения к распоряжению; принятый подписанный оригинал автоматически открывает работы без отдельного ввода даты стройконтролем. Владелец планирует очистку и повторную загрузку объектов; backfill прежних дат не нужен, очистка ещё не выполняется.

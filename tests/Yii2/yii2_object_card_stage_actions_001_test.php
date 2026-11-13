@@ -60,27 +60,22 @@ try {
     }
     $check(1, substr_count($restricted['body'], 'class="fm2-next-action"'), 'reader one informative primary block');
 
-    $fixture->nativeOriginal('2026-09-01');
+    $legacyOriginal=$fixture->nativeOriginal('2026-09-01');
     $ready = $fixture->request('GET', '/pilot/objects/4512', [], $manager);
     $check(200, $ready['status'], 'accepted original card');
-    foreach (['Готов к открытию', 'Открыть монтажные работы', 'name="action" value="open_confirmed"', 'Подписанный оригинал.pdf'] as $text) {
+    foreach (['Готов к открытию', 'Вернуться к оригиналу', 'Подписанный оригинал.pdf'] as $text) {
         $check(true, str_contains($ready['body'], $text), 'ready behavior preserved ' . $text);
     }
     foreach (['Состав сохранён. Ожидается подписанный оригинал', 'Подписанный оригинал ожидается'] as $text) {
         $check(false, str_contains($ready['body'], $text), 'ready excludes pending copy ' . $text);
     }
     $readyReader = $fixture->request('GET', '/pilot/objects/4512', [], $reader);
-    $check(true, str_contains($readyReader['body'], 'Открыть монтажные работы'), 'restricted opening state visible');
+    $check(true, str_contains($readyReader['body'], 'Готов к открытию'), 'restricted opening state visible');
     $check(false, str_contains($readyReader['body'], 'name="action" value="open_confirmed"') || str_contains($readyReader['body'], 'Открыть работы</button>'), 'restricted opening command absent');
     $check(1, substr_count($readyReader['body'], 'class="fm2-next-action"'), 'restricted opening one block');
 
-    $revision = $fixture->rows('fm2_assignment_order_original_revisions')[0]['revision_id'];
-    $open = [
-        '_csrf' => $fixture->csrf($ready['body']), 'action' => 'open_confirmed',
-        'requestId' => '33333333-3333-4333-8333-000000000001', 'orderId' => '81',
-        'revisionId' => $revision, 'sequence' => '0', 'actualStartDate' => '2026-09-02',
-    ];
-    $check(303, $fixture->form('/pilot/objects/4512/execution', $open, $manager)['status'], 'open existing confirmed original');
+    $metadata=array_replace($fixture->metadata($manager,'22222222-2222-4222-8222-000000000002'),['mode'=>'correction','documentDate'=>'2026-09-02','rootOriginalId'=>$legacyOriginal->rootOriginalId(),'targetRevisionId'=>$legacyOriginal->currentRevisionId(),'expectedCurrentRevisionId'=>$legacyOriginal->currentRevisionId(),'correctionReason'=>'Дата приложения подтверждена']);
+    $check(201,$fixture->upload($manager,$metadata)['status'],'correction with signed date opens legacy original');
     $check(303, $fixture->selection($manager, '44444444-4444-4444-8444-000000000001', [7002], 'new_order', 1)['status'], 'prepare later order while work is open');
     $duringBefore = $fixture->facts();
     $duringWork = $fixture->request('GET', '/pilot/objects/4512', [], $manager);

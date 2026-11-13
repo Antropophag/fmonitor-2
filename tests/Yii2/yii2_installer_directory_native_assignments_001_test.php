@@ -20,12 +20,6 @@ try {
     $receipt=$f->upload($cookies,$f->metadata($cookies));
     assertSameValue(201,$receipt['status'],'native original upload');
     $original=json_decode($receipt['body'],true,flags:JSON_THROW_ON_ERROR);
-    $applied=$f->form('/pilot/objects/4512/execution',[
-        '_csrf'=>$f->token($cookies),'action'=>'apply',
-        'requestId'=>'44444444-4444-4444-8444-000000000038','orderId'=>'81',
-        'revisionId'=>$original['currentRevisionId'],'sequence'=>'0',
-    ],$cookies);
-    assertSameValue(303,$applied['status'],'native application action');
     $applications=$f->rows('fm2_assignment_order_applications');
     assertSameValue(1,count($applications),'one authoritative application fact');
     $applicationBytes=json_encode($applications[0],JSON_THROW_ON_ERROR);

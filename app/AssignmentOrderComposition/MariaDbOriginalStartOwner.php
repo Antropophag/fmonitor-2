@@ -23,7 +23,7 @@ final readonly class MariaDbOriginalStartOwner
                 $prior=$this->startForRevision((string)$c->targetRevisionId);
                 if($prior===null||$prior!==$appendixStartDate)return$out('rejected','appendix_start_changed',false);
             }
-            $bytes=$this->bytes($c->upload->stream);if($bytes===null||!str_starts_with($bytes,'%PDF-'))return$out('rejected','invalid_pdf',false);
+            $bytes=$this->bytes($c->upload->stream);if($bytes===null)return$out('failed','dependency_unavailable',true);
             $sha=hash('sha256',$bytes);$size=strlen($bytes);$fingerprint=$this->fingerprint($c,$objectId,$appendixStartDate,$sha,$size);
             $intent=$this->intent($c->requestId);
             if($intent!==null&&!hash_equals($intent['semantic_fingerprint'],$fingerprint))return$out('conflict','request_id_conflict',false);

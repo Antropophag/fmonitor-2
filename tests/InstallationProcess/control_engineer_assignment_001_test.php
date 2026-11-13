@@ -41,7 +41,7 @@ try {
     // Produce one historical native application through existing public HTTP, then remove only fixture-owned standalone setup to simulate pre-#52 data.
     $f->start();$cookies=[];assertSameValue(303,$f->login($cookies,18)['status'],'login');assertSameValue(303,$f->selection($cookies)['status'],'A selection');
     $receipt=$f->upload($cookies,$f->metadata($cookies));assertSameValue(201,$receipt['status'],'A original');$original=json_decode($receipt['body'],true,flags:JSON_THROW_ON_ERROR);
-    assertSameValue(303,$f->form('/pilot/objects/4512/execution',['_csrf'=>$f->token($cookies),'action'=>'apply','requestId'=>'44444444-0052-4444-8444-000000000001','orderId'=>'81','revisionId'=>$original['currentRevisionId'],'sequence'=>'0'],$cookies)['status'],'A application');
+    assertSameValue(1,count($f->rows('fm2_assignment_order_applications')),'A automatically applied');
     $application=$f->rows('fm2_assignment_order_applications')[0];$applicationBytes=json_encode($application,JSON_THROW_ON_ERROR);
     $f->db->query("DELETE FROM {$p}fm2_control_engineer_assignments");
 

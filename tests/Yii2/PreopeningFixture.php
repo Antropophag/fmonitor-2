@@ -159,7 +159,7 @@ final class PreopeningFixture
     }
     public function metadata(array &$cookies,string $request='22222222-2222-4222-8222-000000000001'): array
     {
-        return ['csrfToken'=>$this->token($cookies),'requestId'=>$request,'mode'=>'initial','documentDate'=>'2026-09-01','compositionConfirmed'=>true,'rootOriginalId'=>null,'targetRevisionId'=>null,'expectedCurrentRevisionId'=>null,'correctionReason'=>null,'originalFilename'=>'signed.pdf'];
+        return ['csrfToken'=>$this->token($cookies),'requestId'=>$request,'mode'=>'initial','documentDate'=>'2026-09-01','appendixStartDate'=>'2026-09-02','compositionConfirmed'=>true,'rootOriginalId'=>null,'targetRevisionId'=>null,'expectedCurrentRevisionId'=>null,'correctionReason'=>null,'originalFilename'=>'signed.pdf'];
     }
     public function upload(array &$cookies,array $metadata,?string $bytes=null,int $order=81,int $object=4512,array $headers=[]): array
     {

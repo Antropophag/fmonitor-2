@@ -15,7 +15,7 @@ final readonly class MariaDbConfirmedOriginalOpening
     private function open(OpenConfirmedOriginalCommand $c,bool $persistedStart):array
     {
         $failure=static fn(string $reason):array=>['accepted'=>false,'reasonCode'=>$reason];
-        if(!$this->valid($c))return$failure('invalid_command');$s=$this->sql;$owned=false;$committing=false;
+        if(!$this->valid($c,$persistedStart))return$failure('invalid_command');$s=$this->sql;$owned=false;$committing=false;
         try {
             if(!$s->idle())return$failure('dependency_unavailable');
             if($persistedStart){$signed=$s->rows('SELECT s.request_id FROM '.$s->table('fm2_assignment_order_original_starts').' s JOIN '.$s->table('fm2_assignment_order_original_revisions').' v ON v.request_id=s.request_id WHERE s.request_id=? AND v.revision_id=? AND s.appendix_start_date=?',[$c->requestId,$c->originalRevisionId,$c->actualStartDate]);if(count($signed)!==1)return$failure('original_unavailable');}
@@ -63,10 +63,13 @@ final readonly class MariaDbConfirmedOriginalOpening
             return$failure($committing?'persistence_outcome_unknown':(in_array($e->getMessage(),$allowed,true)?$e->getMessage():'dependency_unavailable'));
         }
     }
-    private function valid(OpenConfirmedOriginalCommand $c):bool
+    private function valid(OpenConfirmedOriginalCommand $c,bool$persistedStart):bool
     {
+        $requestPattern=$persistedStart
+            ?'/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D'
+            :'/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D';
         return$c->objectId>0&&$c->orderId>0&&$c->actorId>0&&$c->expectedApplicationSequence>=0&&$c->expectedApplicationSequence<=2147483647&&SelectionScalar::date($c->actualStartDate)
-            &&preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$c->requestId)===1
+            &&preg_match($requestPattern,$c->requestId)===1
             &&preg_match('/^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/D',$c->originalRevisionId)===1;
     }
 }

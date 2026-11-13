@@ -49,3 +49,7 @@ Additive schema39 хранит отдельные immutable intents без пе�
 ### A9 — потребители и завершение
 
 Card/queue читают новый actual_start_date без fallback к плану/document date, в том числе будущий. Checklist association действует в момент открытия. Existing premium eligibility по actual_start_date остаётся прежней: будущая дата не превращается в прошедшую, accepted financial history не переписывается. Focused acceptance включает real domain + HTTP/browser, malformed/denied/replay/partial/correction, migration/recovery и adjacent opening checks. Только после независимого final review допускается scoped production delivery и read-only проверка; deferred formal gates/CI не означают GREEN.
+
+### Совместимость транспорта — PR293 CI repair
+
+Composite upload сохраняет прежний original requestId UUID v1–v5: каждый допустимый UUID открывает работы и exact replay не добавляет facts. Внутренний persisted-start путь допускает тот же UUID только при существующем связанном immutable intent; standalone legacy opening сохраняет прежний UUIDv4 контракт. Неприемлемый PDF сохраняет прежний reasonCode `not_pdf`/`unsafe_pdf` и безопасный receipt оригинального owner. Schema/asset fixture inventories обновляются точно, без ослабления проверок; исторические raw originals остаются самостоятельным read-model fixture для unopened/upcoming состояний.

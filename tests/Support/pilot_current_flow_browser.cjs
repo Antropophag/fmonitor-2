@@ -138,6 +138,7 @@ async function uploadAndCorrect(page) {
   await page.getByRole('link', { name: 'Загрузить оригинал', exact: true }).click();
   await page.locator('input[name="original"]').setInputFiles(path.join(artifactRoot, 'original.pdf'));
   await fillDate(page, 'documentDate', '2026-09-07');
+  await fillDate(page, 'appendixStartDate', '2026-09-07');
   await page.locator('input[name="compositionConfirmed"]').check();
   await page.getByRole('button', { name: 'Загрузить оригинал', exact: true }).click();
   await page.waitForURL('**/pilot/objects/4512');
@@ -168,7 +169,7 @@ async function verifyOriginalDownload(page, context) {
   output.originalSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
 }
 
-async function openAsDistinctActor(browser) {
+async function verifyAutomaticOpeningAsDistinctActor(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   monitor(page, 'distinct-actor');
@@ -179,14 +180,10 @@ async function openAsDistinctActor(browser) {
   await page.goto(`${base}/pilot/objects/4512`);
   await login(page, 'protected19@shlz.ru');
   await page.waitForURL('**/pilot/objects/4512');
-  await fillDate(page, 'actualStartDate', '2026-09-07');
-  const responsePromise = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/execution'));
-  await page.getByRole('button', { name: 'Открыть работы', exact: true }).click();
-  const openingResponse = await responsePromise;
-  if (openingResponse.status() !== 303) throw new Error(`Direct opening rejected status=${openingResponse.status()} body=${(await openingResponse.text()).replace(/\s+/g, ' ').slice(0, 400)}`);
-  await page.waitForURL('**/pilot/objects/4512');
-  if (JSON.stringify(actions) !== '["open_confirmed"]') throw new Error('Opening used an extra application request');
-  output.separateOpener = true;
+  if (await page.locator('[name=action][value=open_confirmed]').count()) throw new Error('Manual opening still exposed');
+  if (!(await page.locator('[data-opening-actor]').innerText()).trim()) throw new Error('Automatic opening attribution missing');
+  if (actions.length !== 0) throw new Error('Read-only actor view emitted execution command');
+  output.automaticOpening = true;
   markAction(page, 'distinct-context-close');
   await context.close();
 }
@@ -275,7 +272,7 @@ async function completeDocuments(ownerPage) {
     await verifyTemplateDownload(ownerPage, ownerContext);
     await uploadAndCorrect(ownerPage);
     await verifyOriginalDownload(ownerPage, ownerContext);
-    await openAsDistinctActor(browser);
+    await verifyAutomaticOpeningAsDistinctActor(browser);
     await completeChecklist(browser);
     await completeDocuments(ownerPage);
     if (output.errors.length) throw new Error(`Browser errors: ${JSON.stringify(output.errors)}`);

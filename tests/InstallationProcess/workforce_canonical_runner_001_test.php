@@ -301,6 +301,7 @@ try {
                 'fm2_assignment_order_original_requests',
                 'fm2_assignment_order_original_revisions',
                 'fm2_assignment_order_original_roots',
+                'fm2_assignment_order_original_starts',
                 'fm2_assignment_order_selection_audits',
                 'fm2_assignment_order_selection_events',
                 'fm2_assignment_order_selection_members',
@@ -389,7 +390,7 @@ try {
             ]),
         ],
         ['result' => $cleanResult, 'tables' => $cleanTables],
-        'A clean exact 25-byte composed prefix must reach ordered canonical v29 and create the full literal catalogue.',
+        'A clean exact 25-byte composed prefix must reach ordered canonical v39 and create the full literal catalogue.',
     );
     wcrAssertExactV5($connection, $prefix25);
     wcrAssertFreshV5Rows($connection, $prefix25);

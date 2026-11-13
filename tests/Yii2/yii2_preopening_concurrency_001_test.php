@@ -23,9 +23,8 @@ try {
         $metadata['csrfToken']=$csrfB;$replayed=$f->upload($b,$metadata,$pdf);assertSameValue(200,$replayed['status'],'same upload resolves through native replay');$receipt=json_decode($replayed['body'],true,flags:JSON_THROW_ON_ERROR);
         assertSameValue($mode==='initial'?1:2,count($f->rows('fm2_assignment_order_original_revisions')),'no duplicate revision from concurrent transport');
     }
-    $open=['action'=>'open_confirmed','requestId'=>'33333333-3333-4333-8333-000000000066','orderId'=>'81','revisionId'=>$receipt['currentRevisionId'],'sequence'=>'0','actualStartDate'=>'2026-09-02'];
-    $results=$batch('/pilot/objects/4512/execution',static fn($i)=>http_build_query(['_csrf'=>$csrf[$i]]+$open),static fn($i)=>['Content-Type: application/x-www-form-urlencoded']);
-    foreach($results as$r)assertSameValue(303,$r['status'],'concurrent exact opening replay');assertSameValue(1,count($f->rows('fm2_assignment_order_applications')),'one application');
+    assertSameValue(2,count($f->rows('fm2_assignment_order_applications')),'one application per accepted original revision');
+    assertSameValue(['working','2026-09-02','18'],array_map(static fn($key)=>$f->rows('fm2_installation_cases')[0][$key],['process_state','actual_start_date','opened_by_user_id']),'concurrent upload opens once');
     assertSameValue(1,count(array_filter($f->rows('fm2_process_events'),static fn($r)=>$r['event_type']==='installation_opened_from_original')),'one opening event');$f->noLegacy();
     echo "PASS: YII2-PREOPENING-JOURNEY-001 concurrent selection, original/correction and opening\n";
 }finally{if($f instanceof PreopeningFixture)$f->close();if($first!==null){proc_terminate($first['process']);proc_close($first['process']);}}

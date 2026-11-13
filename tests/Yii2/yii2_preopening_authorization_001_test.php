@@ -50,7 +50,7 @@ try {
             }
             foreach([$base.'/assignment-order/selection',$order.'/template',$base.'/execution'] as $route)
                 assertSameValue($change==='inactive-role'?403:303,$f->form($route,['_csrf'=>$csrf,'actorId'=>'97'],$session)['status'],'revoked command admission '.$change);
-            $rawMetadata=['csrfToken'=>$csrf,'requestId'=>'22222222-2222-4222-8222-000000000097','mode'=>'initial','documentDate'=>'2026-09-01','compositionConfirmed'=>true,'rootOriginalId'=>null,'targetRevisionId'=>null,'expectedCurrentRevisionId'=>null,'correctionReason'=>null,'originalFilename'=>'signed.pdf'];
+            $rawMetadata=['csrfToken'=>$csrf,'requestId'=>'22222222-2222-4222-8222-000000000097','mode'=>'initial','documentDate'=>'2026-09-01','appendixStartDate'=>'2026-09-02','compositionConfirmed'=>true,'rootOriginalId'=>null,'targetRevisionId'=>null,'expectedCurrentRevisionId'=>null,'correctionReason'=>null,'originalFilename'=>'signed.pdf'];
             $raw=$f->request('POST',$order.'/originals',[],$session,['Content-Type: application/pdf','X-CSRF-Token: '.$csrf,'X-FMonitor-Original: '.base64_encode(json_encode($rawMetadata,JSON_THROW_ON_ERROR))],FMonitor2\Tests\Support\SelectedOriginalFixture::pdf());assertSameValue($change==='inactive-role'?403:303,$raw['status'],'revoked raw upload admission');
             assertSameValue($before,$f->facts(),'revocation changes no process facts');
             assertSameValue($files,$f->base->privateFiles(),'revocation preserves private bytes');
@@ -82,10 +82,10 @@ try {
             if($permission==='assignment_order.composition.select') {
                 $result=$f->form($order.'/template',['_csrf'=>$f->token($cookies)],$cookies);
                 assertSameValue(403,$f->selection($cookies)['status'],'selection save exact capability');
-            } elseif($permission==='installation.open')$result=$f->form($base.'/execution',$opening,$cookies);
+            } elseif($permission==='installation.open')$result=$f->upload($cookies,$f->metadata($cookies));
             else {
                 $metadata=$f->metadata($cookies,'22222222-2222-4222-8222-000000000090');
-                if($permission==='assignment_order.original.correct')$metadata=array_replace($metadata,['mode'=>'correction','rootOriginalId'=>$original->rootOriginalId(),'targetRevisionId'=>$original->currentRevisionId(),'expectedCurrentRevisionId'=>$original->currentRevisionId(),'correctionReason'=>'Проверка прав']);
+                if($permission==='assignment_order.original.correct')$metadata=array_replace($metadata,['mode'=>'correction','documentDate'=>'2026-09-02','rootOriginalId'=>$original->rootOriginalId(),'targetRevisionId'=>$original->currentRevisionId(),'expectedCurrentRevisionId'=>$original->currentRevisionId(),'correctionReason'=>'Проверка прав']);
                 $result=$f->upload($cookies,$metadata);
             }
             assertSameValue(403,$result['status'],'write requires exact capability '.$permission);assertSameValue($before,$f->facts(),'write denial zero facts');assertSameValue($files,$f->base->privateFiles(),'write denial zero files');
@@ -94,12 +94,12 @@ try {
     $manager=[];$f->login($manager,97);
     foreach([$base.'/assignment-order/selection',$order.'/originals/submit',$order.'/originals/history'] as $route)
         assertSameValue(200,$f->request('GET',$route,[],$manager)['status'],'builtin manager admitted '.$route);
-    // Compound opening needs installation.open, not the standalone application grant.
+    // Automatic opening requires upload plus open, without standalone apply/select grants.
     $f->db->query("DELETE FROM {$f->p}fm2_pilot_role_permissions WHERE role_id=1 AND permission IN('assignment_order.composition.select','assignment_order.composition.apply')");
-    $card=$f->request('GET',$base,[],$cookies);assertSameValue(200,$card['status'],'open-only actor card');
-    $open=['_csrf'=>$f->csrf($card['body']),'action'=>'open_confirmed','requestId'=>'33333333-3333-4333-8333-000000000099','orderId'=>'81','revisionId'=>$original->currentRevisionId(),'sequence'=>'0','actualStartDate'=>'2026-09-02'];
-    assertSameValue(303,$f->form($base.'/execution',$open,$cookies)['status'],'compound opening exact capability');
-    assertSameValue('18',$f->rows('fm2_installation_cases')[0]['opened_by_user_id'],'session actor owns opening');
+    $metadata=array_replace($f->metadata($cookies,'22222222-2222-4222-8222-000000000002'),['mode'=>'correction','documentDate'=>'2026-09-02','rootOriginalId'=>$original->rootOriginalId(),'targetRevisionId'=>$original->currentRevisionId(),'expectedCurrentRevisionId'=>$original->currentRevisionId(),'correctionReason'=>'Подписанная дата приложения']);
+    assertSameValue(201,$f->upload($cookies,$metadata)['status'],'upload and open capabilities admit compound command');
+    assertSameValue('18',$f->rows('fm2_installation_cases')[0]['opened_by_user_id'],'session uploader owns opening');
+    $before=$f->facts();assertSameValue(410,$f->form($base.'/execution',$opening,$cookies)['status'],'manual opening retired');assertSameValue($before,$f->facts(),'retired opening no facts');
     $f->noLegacy();
-    echo "PASS: YII2-PREOPENING-JOURNEY-001 current authority and open-only compound command\n";
+    echo "PASS: current authority and automatic original opening\n";
 } finally {if($f instanceof PreopeningFixture)$f->close();}
