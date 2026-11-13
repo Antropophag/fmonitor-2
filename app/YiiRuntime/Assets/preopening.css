@@ -234,3 +234,14 @@
 
 /* Results participate in the modal body scroll; avoid two nested scroll areas. */
 dialog.fm2-selection-modal .fm2-picker-results{max-block-size:none;max-height:none;overflow:visible}
+.fm2-object-comment{min-inline-size:0;border-block-start:1px solid var(--fm2-border)}
+.fm2-object-comment>summary{padding:14px 18px;cursor:pointer;font-size:13px;color:var(--fm2-ink);overflow-wrap:anywhere}
+.fm2-object-comment>summary::marker{color:var(--fm2-muted)}
+.fm2-object-comment__summary-title{font-weight:600}.fm2-object-comment__summary-title>small{margin-inline-start:10px;color:var(--fm2-muted);font-size:12px;font-weight:400}
+.fm2-object-comment__excerpt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-block-start:6px;line-height:1.4;color:var(--fm2-muted);font-weight:400}
+.fm2-object-comment[open] .fm2-object-comment__excerpt{display:none}
+.fm2-object-comment__body{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:0 14px 16px;min-inline-size:0}
+.fm2-object-comment__current{min-inline-size:0;line-height:1.5;overflow-wrap:anywhere}.fm2-object-comment__meta{color:var(--fm2-muted);line-height:1.4;overflow-wrap:anywhere}
+.fm2-object-comment form{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-inline-size:0;max-inline-size:100%}.fm2-object-comment form>.shlz-field,.fm2-object-comment form .shlz-field__control,.fm2-object-comment__textarea{box-sizing:border-box;inline-size:100%;min-inline-size:0;max-inline-size:100%}.fm2-object-comment form .shlz-field__control{align-items:stretch;block-size:auto;min-block-size:120px;padding:10px 12px;overflow:visible}.fm2-object-comment__textarea{display:block;block-size:auto;min-block-size:120px;resize:vertical}.fm2-object-comment form>.fm2-problem{box-sizing:border-box;min-inline-size:0;max-inline-size:100%;overflow-wrap:anywhere}.fm2-object-comment form>.shlz-button{justify-self:start;max-inline-size:100%;white-space:normal}
+
+.fm2-finish-certificate{display:grid;gap:4px;margin-block-start:12px}.fm2-finish-certificate>span{color:var(--fm2-muted);font-size:12px}

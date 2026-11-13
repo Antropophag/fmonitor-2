@@ -257,3 +257,11 @@ document.addEventListener('submit', async event => {
     showUnknownCompletionResult(form);
   }
 });
+
+(() => {
+  const comment = document.querySelector('details#object-comment');
+  if (!comment) return;
+  const reveal = () => { if (location.hash === '#object-comment') comment.open = true; };
+  reveal();
+  addEventListener('hashchange', reveal);
+})();

@@ -1,0 +1,7 @@
+# Assignment-order template download —2026-10-30
+
+Owner reported that a generated assignment-order template did not download. Production evidence showed successful PDF generation followed by browser GET retries against the POST-only endpoint. Bounded fix: return the generated PDF as an attachment and keep the selection page in the same browsing context. GET remains rejected; authorization, CSRF, audit, PDF generation and business facts are unchanged.
+
+Root authored the specification, regression and implementation under the owner-authorized short code→review→production exception. Focused canonical browser verification proves one POST, HTTP200 attachment, real PDF bytes, one download, no GET retry or blank tab. PHP lint and diff-check pass. Independent review [TEMPLATE-DOWNLOAD-20261030](../../reviews/code/TEMPLATE-DOWNLOAD-20261030.md) is APPROVED. Full CI and ordinary gates remain owner-deferred.
+
+Worktree `fmonitor-2-template-download-20261030`, base `ffba36b7`. Evidence `~/.local/share/fmonitor-2/template-download-20261030/`. Status: approved and deployed 2026-10-30 at 14:56:44 MSK (backup timestamp `20261030T115644Z`). Deployment evidence confirms that the host and PHP-container runtime hashes equal the independently reviewed hashes. The canonical browser regression is GREEN and proves PDF generation and download in its controlled browser. Native Safari was unavailable for live verification, so this record makes no claim that production PDF generation was exercised through Safari after deployment.

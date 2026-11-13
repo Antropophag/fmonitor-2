@@ -1,0 +1,61 @@
+{
+  "change": "reconcile-production-291-ci-repair",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "app/InstallationProcess/YiiOperationalDashboard.php",
+    "openspec/changes/reconcile-production-20261110/ci-repair-verification-input.json",
+    "reviews/code/PRODUCTION-RECONCILIATION-291-CI-REPAIR.md",
+    "reviews/tests/PRODUCTION-RECONCILIATION-291-CI-REPAIR.md",
+    "specs/PRODUCTION-RECONCILIATION-20261110.md",
+    "tests/InstallationProcess/installation_completion_schema_001_test.php",
+    "tests/Otiz/settlement_owner_001_test.php",
+    "tests/Otiz/settlement_v2_corrections_integration_001_test.php",
+    "tests/Otiz/settlement_v2_db_001_test.php",
+    "tests/Otiz/settlement_v2_rights_flow_001_test.php",
+    "tests/Runtime/deadline_transfer_certificate_recovery_001_test.php",
+    "tests/Verification/architecture_native_select_tokens_291_test.py",
+    "tests/Yii2/otiz_settlement_v2_browser.mjs",
+    "tests/Yii2/otiz_v2_acceptance_assertions.mjs",
+    "tests/Yii2/otiz_v2_table_assertions.mjs",
+    "tests/Yii2/user_access_browser.mjs",
+    "tests/Yii2/yii2_dashboard_active_change_parity_291_test.php",
+    "tests/Yii2/yii2_legacy_identity_link_001_test.php",
+    "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php",
+    "tests/Yii2/yii2_object_card_presentation_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php",
+    "tests/Yii2/yii2_otiz_v2_acceptance_001_test.php",
+    "tools/architecture/check.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "PRODUCTION-RECONCILIATION-20261110",
+      "acceptance_id": "architecture-token-boundary",
+      "spec_path": "specs/PRODUCTION-RECONCILIATION-20261110.md",
+      "seam": "architecture-token-boundary",
+      "tests": [
+        "tests/Verification/architecture_native_select_tokens_291_test.py",
+        "tests/Verification/architecture_js_select_tokens_286_test.py",
+        "tests/Verification/architecture_guard_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Verification/architecture_native_select_tokens_291_test.py": "INTENDED_RED",
+        "tests/Verification/architecture_js_select_tokens_286_test.py": "GREEN",
+        "tests/Verification/architecture_guard_001_test.py": "GREEN"
+      }
+    },
+    {
+      "spec_id": "PRODUCTION-RECONCILIATION-20261110",
+      "acceptance_id": "active-stage-parity",
+      "spec_path": "specs/PRODUCTION-RECONCILIATION-20261110.md",
+      "seam": "active-stage-parity",
+      "tests": [
+        "tests/Yii2/yii2_dashboard_active_change_parity_291_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_dashboard_active_change_parity_291_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { verifyReferenceTable, openRowDecision, openCommonDeduction } from "./otiz_v2_table_assertions.mjs";
-import { verifyDraftWorkflow, verifyUnsavedApproval } from "./otiz_v2_acceptance_assertions.mjs";
+import { verifyDraftWorkflow, verifyUnsavedApproval, verifyDismissedReserves } from "./otiz_v2_acceptance_assertions.mjs";
 import { verifyOtizLayout, verifyOtizRegisterLayouts } from "./otiz_v2_layout_assertions.mjs";
 const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const { chromium } = createRequire(import.meta.url)(c.playwright);
@@ -36,6 +36,8 @@ try {
   ]);
   assert.equal(new URL(page.url()).pathname, "/pilot/otiz/payments");
   await verifyOtizRegisterLayouts(page, c);
+  await verifyDismissedReserves(page, c);
+  await page.goto(c.origin+"/pilot/otiz/payments");
   await page.getByRole("link", { name: "Ожидают выплаты" }).waitFor();
   assert.equal(await page.getByRole("link", { name: "История" }).count(), 1);
   assert.equal(
@@ -91,7 +93,7 @@ try {
   assert.match(basisText, /9[\s\u00a0]000,00/);
   assert.match(basisText, /6[\s\u00a0]000,00/);
   await proof.locator('summary').click();
-  for (const label of ['Объект / получатель','Объём / доля','До уменьшений','Уменьшение','К выплате','Уволен']) assert.ok(objectDetails.includes(label), 'reference object table explains '+label);
+  for (const label of ['Объект / получатель','Объём / доля','До уменьшений','Уменьшение','К выплате']) assert.ok(objectDetails.includes(label), 'reference object table explains '+label);
   assert.equal(await page.locator('[data-grouping="objects"] [data-v2-deduction-open][data-employee-id=""]').count(),2,'common deduction action on each object');
   await employeeTab.click();
   const employeeToggles = page.locator("[data-otiz-employee-toggle]");
@@ -101,7 +103,7 @@ try {
     .locator('[data-grouping="employees"]')
     .innerText();
   assert.match(employeeDetails, /Сидоров Сергей/);
-  for (const label of ['Монтажник / объект','Объектов','Доля по объекту','К выплате','Уволен']) assert.ok(employeeDetails.includes(label), 'reference employee table explains '+label);
+  for (const label of ['Монтажник / объект','Объектов','Доля по объекту','К выплате']) assert.ok(employeeDetails.includes(label), 'reference employee table explains '+label);
   assert.ok(
     (await page.locator("[data-otiz-employee-group]").count()) >= 3,
     "employee grouping has stable recipient parents",
@@ -111,7 +113,7 @@ try {
     "employee grouping exposes per-object child contributions",
   );
   await openRowDecision(page);
-  const decisionForm = page.locator('form[action$="/decisions"]').first();
+  const decisionForm = page.locator('dialog[open] form[action$="/decisions"]');
   await decisionForm.getByRole("radio", { name: "Не платить" }).check();
   await decisionForm.getByLabel(/Основание решения/).fill("Browser decision");
   await decisionForm.getByRole("button", { name: "Сохранить решение" }).click();
@@ -175,7 +177,7 @@ try {
     .click();
   const confirmation=page.locator('[data-v2-payment-dialog] [data-confirm-summary]');
   const confirmationText=(await confirmation.innerText()).replace(/\u00a0/g,' ');
-  for(const text of ['#'+draftId,'26.09.2026','2 объекта','14 000,00','вне FMonitor'])assert.ok(confirmationText.includes(text),'whole payment scope visible: '+text);
+  for(const text of ['#'+draftId,'26.09.2026','2 объекта','10 800,00','вне FMonitor'])assert.ok(confirmationText.includes(text),'whole payment scope visible: '+text);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const modal = page.locator('[data-v2-payment-dialog]');

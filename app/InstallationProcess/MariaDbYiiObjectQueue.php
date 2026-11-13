@@ -68,7 +68,7 @@ final readonly class MariaDbYiiObjectQueue
             throw new \RuntimeException('Page unavailable.');
         }
         $offset = ($page - 1) * $size;
-        $effective=static fn(string$field,string$column):string=>MariaDbEffectiveObjectDetails::sqlValue($field,'l.'.$column);$columns = "c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,".$effective('address','ordadr_address')." ordadr_address,".$effective('entrance','entrance')." entrance,".$effective('regnumber','regnumber')." regnumber,".$effective('zavnumber','zavnumber')." zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id";
+        $effective=static fn(string$field,string$column):string=>MariaDbEffectiveObjectDetails::sqlValue($field,'l.'.$column);$columns = "c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,".$effective('address','ordadr_address')." ordadr_address,".$effective('entrance','entrance')." entrance,".$effective('regnumber','regnumber')." regnumber,".$effective('zavnumber','zavnumber')." zavnumber,CASE WHEN JSON_TYPE(JSON_EXTRACT(e.values_json,'$.comment'))='STRING' THEN JSON_UNQUOTE(JSON_EXTRACT(e.values_json,'$.comment')) ELSE NULL END comment,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id";
         $rows = $this->db->createCommand("SELECT {$columns}{$from} ORDER BY l.workdatestart IS NULL,LEFT(l.workdatestart,10),c.legacy_installation_object_id LIMIT {$size} OFFSET {$offset}", $params)->queryAll();
         $objects = [];
         foreach ($rows as $row) {
@@ -87,7 +87,7 @@ final readonly class MariaDbYiiObjectQueue
         $count = self::currentChecklistCompletionCount($p);
         $pto = "EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='pto_act')";
         $dec = "EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='declaration')";
-        $active = "c.process_state IN('working','completed','needs_assignment_change') AND (a.application_id IS NOT NULL OR o.status IN('prepared','registered'))";
+        $applied = "(a.application_id IS NOT NULL OR o.status IN('prepared','registered'))";
         $ready = "(v.revision_id IS NOT NULL OR (s.assignment_order_id IS NULL AND (a.application_id IS NOT NULL OR COALESCE(o.status='registered',0))))";
         $filter = match ($status) {
             'needs_assignment_order' => "c.process_state IN('needs_assignment_order','assignment_order_prepared')"
@@ -95,9 +95,9 @@ final readonly class MariaDbYiiObjectQueue
                 . " OR (c.process_state='needs_assignment_order' AND o.id IS NULL AND a.application_id IS NULL)"
                 . " OR (c.process_state='assignment_order_prepared' AND o.status='prepared' AND a.application_id IS NULL))",
             'ready_to_open' => "c.process_state IN('needs_assignment_order','assignment_order_prepared') AND {$ready}",
-            'installation' => "{$active} AND {$count}<41 AND NOT({$pto} AND {$dec})",
-            'document_closeout' => "{$active} AND {$count}=41 AND NOT({$pto} AND {$dec})",
-            'completed' => "{$active} AND {$pto} AND {$dec}",
+            'installation' => "c.process_state='working' AND {$applied} AND {$count}<41 AND NOT({$pto} AND {$dec})",
+            'document_closeout' => "c.process_state='working' AND {$applied} AND {$count}=41 AND NOT({$pto} AND {$dec})",
+            'completed' => "c.process_state IN('working','completed') AND {$applied} AND {$pto} AND {$dec}",
             'needs_assignment_change' => "c.process_state='needs_assignment_change'"
                 . " AND (a.application_id IS NOT NULL OR o.status='registered')",
             default => '1=1',
@@ -215,7 +215,9 @@ final readonly class MariaDbYiiObjectQueue
             'id'=>$id, 'caseId'=>(int)$r['case_id'], 'registrationNumber'=>trim((string)($r['regnumber']??'')),
             'factoryNumber'=>trim((string)($r['zavnumber']??'')),
             'address'=>$r['ordadr_address'], 'entrance'=>$r['entrance'],
+            'comment'=>is_string($r['comment']??null)?$r['comment']:null,
             'plannedStartDate'=>$start ?? 'Не указано', 'plannedFinishDate'=>$finish ?? 'Не указано',
+            'actualStartDate'=>self::date($r['actual_start_date']),
             'planningDatesUnknownAtCutover'=>$start === null || $finish === null,
             'dataOrigin'=>'migration_native', 'status'=>$label,
             'nextStep'=>'Откройте карточку объекта монтажа',

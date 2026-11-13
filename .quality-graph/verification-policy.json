@@ -274,6 +274,12 @@
   ],
   "capability_ownership": [
     {
+      "name": "architecture-sql-ownership",
+      "patterns": ["tools/architecture/check.py", "tools/architecture/check"],
+      "verifiers": ["tests/Verification/architecture_native_select_tokens_291_test.py", "tests/Verification/architecture_js_select_tokens_286_test.py", "tests/Verification/architecture_guard_001_test.py"],
+      "consumers": []
+    },
+    {
       "name": "installer-utilization-observations",
       "patterns": [
         "app/Workforce/InstallerUtilizationObservationSchemaMigration.php",
@@ -516,6 +522,8 @@
         "app/IdentityAccess/MariaDbReissueUserInvitation.php",
         "app/IdentityAccess/MariaDbUserAccessDirectory.php",
         "app/IdentityAccess/MariaDbUserInvitations.php",
+        "app/IdentityAccess/MariaDbUserActivation.php",
+        "app/YiiRuntime/Views/activate.php",
         "app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php",
         "app/InstallationProcess/LegacyControlEngineerImportSchemaMigration.php",
         "app/PilotHttp/MariaDbPilotUserDirectory.php",
@@ -524,6 +532,7 @@
       "verifiers": [
         "tests/InstallationProcess/invitation_reissue_http_001_test.php",
         "tests/InstallationProcess/legacy_control_engineer_http_001_test.php",
+        "tests/Yii2/yii2_activation_password_20261029_test.php",
         "tests/Yii2/yii2_user_access_edges_001_test.php"
       ],
       "consumers": []
@@ -587,10 +596,12 @@
       "name": "otiz-settlement-v2-schema",
       "patterns": [
         "app/InstallationProcess/OtizSettlementV2SchemaMigration.php",
-        "app/InstallationProcess/OtizSettlementV2CorrectionsSchemaMigration.php"
+        "app/InstallationProcess/OtizSettlementV2CorrectionsSchemaMigration.php",
+        "app/InstallationProcess/OtizPaymentDecisionObjectScopeSchemaMigration.php"
       ],
       "verifiers": [
-        "tests/Otiz/settlement_v2_db_001_test.php"
+        "tests/Otiz/settlement_v2_db_001_test.php",
+        "tests/InstallationProcess/otiz_object_decision_migration_20261030_test.php"
       ],
       "consumers": [
         "canonical-migration-frontier"
@@ -612,6 +623,8 @@
         ,"app/Otiz/MariaDbNativeOtizAdmission.php"
         ,"app/Otiz/MariaDbOtizCalculationRegister.php"
         ,"app/Otiz/MariaDbOtizPortfolioEconomy.php"
+        ,"app/Otiz/MariaDbOtizMonthlyTotals.php"
+        ,"app/Otiz/OtizCalculationReportFilter.php"
         ,"app/YiiRuntime/Controllers/OtizSettlementV2Controller.php"
         ,"app/YiiRuntime/Controllers/OtizAdmissionController.php"
         ,"app/YiiRuntime/Views/otiz-v2-register.php"
@@ -622,9 +635,13 @@
       ],
       "verifiers": [
         "tests/Otiz/native_admission_001_test.php",
+        "tests/Otiz/monthly_totals_20261029_test.php",
+        "tests/Otiz/report_filters_20261029_test.php",
         "tests/Otiz/settlement_v2_001_test.php",
         "tests/Otiz/settlement_v2_db_001_test.php",
         "tests/Otiz/settlement_v2_workbook_001_test.php",
+        "tests/Otiz/object_scoped_decisions_20261030_test.php",
+        "tests/Yii2/yii2_otiz_decision_preview_20261030_test.php",
         "tests/Yii2/yii2_otiz_settlement_v2_001_test.php"
       ],
       "consumers": []
@@ -666,6 +683,7 @@
         ,"app/RuntimeRestore/RuntimeRecoverySchemaV35.php"
         ,"app/RuntimeRestore/RuntimeRecoverySchemaV36.php"
         ,"app/RuntimeRestore/RuntimeRecoverySchemaV37.php"
+        ,"app/RuntimeRestore/RuntimeRecoverySchemaV38.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
@@ -694,6 +712,7 @@
       "name": "yii-object-read-presentation",
       "patterns": [
         "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+        "app/InstallationProcess/MariaDbYiiObjectQueueProjection.php",
         "app/InstallationProcess/MariaDbYiiObjectCard.php",
         "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
         "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
@@ -704,6 +723,8 @@
       ],
       "verifiers": [
         "tests/Yii2/yii2_object_queue_001_test.php",
+        "tests/Yii2/yii2_object_actual_dates_20261030_test.php",
+        "tests/Yii2/yii2_dashboard_active_change_parity_291_test.php",
         "tests/Yii2/yii2_object_card_001_test.php"
       ],
       "consumers": []
@@ -764,6 +785,9 @@
       ],
       "verifiers": [
         "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
+        "tests/Yii2/yii2_object_comments_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_browser_20261030_test.php",
+        "tests/Yii2/yii2_object_comments_lifecycle_20261030_test.php",
         "tests/Yii2/yii2_object_card_001_test.php",
         "tests/Yii2/yii2_object_details_editing_001_test.php"
       ],

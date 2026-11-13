@@ -14,6 +14,8 @@ $check = static function (bool $value, string $message) use (&$failures): void {
 
 try {
     $fixture = new PreopeningFixture(dirname(__DIR__, 2));
+    // This presentation scenario has a baseline finish and no deadline adjustment.
+    $fixture->db->query("UPDATE {$fixture->p}fm_maintable SET workdateendadjusted=NULL WHERE id=4512");
     $fixture->start();
     $cookies = [];
     $fixture->login($cookies);
@@ -85,13 +87,18 @@ try {
         foreach ($xpath->query('.//dt[normalize-space()="' . $label . '"]', $panel) ?: [] as $term) {
             $next = $term->nextSibling;
             while ($next && $next->nodeType !== XML_ELEMENT_NODE) $next = $next->nextSibling;
-            if ($next && trim($next->textContent) === $value) return true;
+            if ($next) {
+                $dates = $xpath->query('./time', $next);
+                if ($dates->length === 1 && trim($dates->item(0)->textContent) === $value) return true;
+                if (trim($next->textContent) === $value) return true;
+            }
         }
         return false;
     };
     foreach ([['Плановое начало','01.10.2026'],['Плановое завершение','01.12.2026'],['Монтажное дело','Готов к открытию'],['Оригинал распоряжения','Принят']] as [$label, $value]) {
         $check($fact($label, $value), 'readiness pair ' . $label . '=' . $value);
     }
+    $check($xpath->query('//*[@id="object-panel-readiness"]//div[dt="Плановое завершение"]/dd//div[contains(@class,"fm2-finish-certificate")]')->length===1, 'deadline certificate is under planned finish');
     $panelText = $panel ? trim($panel->textContent) : '';
     $check(str_contains($panelText, 'Готовность оборудования') && substr_count($panelText, 'неизвестно') >= 4, 'readiness exposes three unknown equipment dates and unknown successful sync');
     $check(!str_contains($panelText, 'Фактическое начало'), 'absent factual start is not invented');
@@ -109,7 +116,11 @@ try {
         foreach ($xpath->query('.//dt[normalize-space()="' . $label . '"]', $passport) ?: [] as $term) {
             $next = $term->nextSibling;
             while ($next && $next->nodeType !== XML_ELEMENT_NODE) $next = $next->nextSibling;
-            if ($next && trim($next->textContent) === $value) return true;
+            if ($next) {
+                $dates = $xpath->query('./time', $next);
+                if ($dates->length === 1 && trim($dates->item(0)->textContent) === $value) return true;
+                if (trim($next->textContent) === $value) return true;
+            }
         }
         return false;
     };

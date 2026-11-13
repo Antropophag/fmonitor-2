@@ -31,9 +31,11 @@ PHP_HTML_SELECT_ATOM = re.compile(
     r"(?<![A-Za-z0-9_-])(?:shlz-(?:field--select|select(?:[-_][A-Za-z0-9_-]+)?)"
     r"|data-shlz-select(?:[-_][A-Za-z0-9_-]+)?)(?![A-Za-z0-9_-])"
 )
-PHP_HTML_SELECT_TAG = re.compile(r"</?select(?=[\s/>])", re.I)
+PHP_HTML_SELECT_TAG = re.compile(r"</?select(?=[\s/>]|$)", re.I)
 JS_CODE_SELECT_IDENTIFIER = re.compile(
-    r"\bselect\b(?=\s*(?:=>|\.(?:addEventListener|closest)\s*\())"
+    r"(?:(?<=\.)|(?<=\?\.))select\b"
+    r"|\bselect\b(?=\s*(?:=>|\?\.|\.|=(?!=)))"
+    r"|(?<=\bconst\s)select\b|(?<=\blet\s)select\b|(?<=\bvar\s)select\b"
 )
 JS_DOM_SELECT_TOKEN = re.compile(r"\bselect\b")
 JS_DOM_SELECTOR_CALL = re.compile(r"(?:\.|\b)(?:querySelector(?:All)?|closest|matches)\s*\(\s*$")
@@ -238,17 +240,20 @@ def sql_owner(path: Path) -> bool:
 
 def php_sql_detection_line(line: str) -> str:
     """Ignore PHP/component identifiers without changing SQL or fingerprints."""
+    def code(value: str) -> str:
+        return PHP_HTML_SELECT_TAG.sub("<HTML_COMPONENT_TAG", PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", value))
+
     parts: list[str] = []
     offset = 0
     for token in PHP_QUOTED.finditer(line):
-        parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:token.start()]))
+        parts.append(code(line[offset:token.start()]))
         quoted = token.group(0)
         is_select_key = quoted[1:-1].lower() == "select" and re.match(r"[^\S\r\n]*=>", line[token.end():]) is not None
         parts.append("''" if is_select_key or PHP_DOTTED_ATOM.fullmatch(quoted[1:-1])
                      else PHP_HTML_SELECT_TAG.sub("<HTML_COMPONENT_TAG",
                          PHP_HTML_SELECT_ATOM.sub("HTML_COMPONENT_TOKEN", quoted)))
         offset = token.end()
-    parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:]))
+    parts.append(code(line[offset:]))
     return "".join(parts)
 
 

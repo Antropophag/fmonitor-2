@@ -155,6 +155,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'POST pilot/otiz/calculations/<id:\\d+>/refresh' => 'otiz-settlement-v2/refresh',
                 'POST pilot/otiz/calculations/<id:\\d+>/cancel' => 'otiz-settlement-v2/cancel',
                 'POST pilot/otiz/calculations/<id:\\d+>/replace' => 'otiz-settlement-v2/replace',
+                'POST pilot/otiz/calculations/<id:\\d+>/reserve-releases' => 'otiz-settlement-v2/reserve-release',
                 'POST pilot/otiz/calculations/<id:\\d+>/decisions' => 'otiz-settlement-v2/decision',
                 'POST pilot/otiz/calculations/<id:\\d+>/decisions/preview' => 'otiz-settlement-v2/decision-preview',
                 'POST pilot/otiz/calculations/<id:\\d+>/deductions' => 'otiz-settlement-v2/deduction',

@@ -1,0 +1,29 @@
+{
+  "change": "erp-order-link-20261030",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbErpEquipmentFactsSource.php",
+    "tests/InstallationProcess/erp_order_document_link_20261030_test.py",
+    "tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php",
+    "specs/ERP-EQUIPMENT-FACTS-001.md",
+    "docs/operations/erp-order-link-20261030.md",
+    "docs/operations/erp-order-link-20261030-verification.json",
+    "reviews/code/ERP-ORDER-LINK-20261030.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "source-document-link",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "generatedSQL/liveERP readonly",
+      "tests": [
+        "tests/InstallationProcess/erp_order_document_link_20261030_test.py",
+        "tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/InstallationProcess/erp_order_document_link_20261030_test.py": "GREEN",
+        "tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

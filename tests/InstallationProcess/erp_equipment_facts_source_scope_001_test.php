@@ -49,7 +49,7 @@ foreach ([
     'sale.Номер as sourceOrderNumber',
     "nullif(convert(varchar(10), max(sroki.ДатаКомплектности), 23), '0001-01-01') as readinessDate",
     "nullif(convert(varchar(10), max(sroki.ДатаПолнойОтгрузки), 23), '0001-01-01') as fullShipmentDate",
-    'prod.Номер = sale.Номер',
+    'prod.ДокументОснование = sale.Ссылка',
     'sroki.ЗаказКлиента = sale.Ссылка',
     'prod.Ссылка = etap.Распоряжение',
     'sale.Ссылка = prod.ДокументОснование',

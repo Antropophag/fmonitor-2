@@ -1,0 +1,13 @@
+# OTIZ-OBJECT-DECISIONS-20261030
+
+Owner clarification2026-10-30: manual IB/security exclusion applies to installer ONLY selected object. Keep own share reserved with free-text reason; other workers on that object and same installer on other objects receive normal sums. Already paid facts and historical decisions unchanged.
+
+Public commands: saveObjectDecision(actor,calculationId,expectedRevision,objectId,employeeId,decision,reason,operationId) and previewObjectDecision with same scope but no operationId. Require exact object+employee membership, reason when saving do_not_pay (preview may be explored before entering a reason), draft-only, normal auth/revision/idempotency locking. Preview read-only; scoped reserve is exact share. Reject wrong object membership, stale revision and paid/accepted mutation. Replays exact, conflicting operation IDs rejected.
+
+Additive canonical migration38: nullable object_id on decision rows, NULL explicitly means historical/global scope. Preserve all legacy rows/facts and old service methods. New scoped rows override legacy global decision only on exact pair; no blanketdeactivation of NULL/other-object rows. Canonical migration/readiness must remain idempotent on both predecessor/upgraded schemas. Existing accepted projections must not be reinterpreted just on read.
+
+New HTTP UI requires objectId, never silently creates new global decision. Object-group participant button supplies object; multi-object employee must choose object explicitly. Per-pair editor/preview/recovery maps preserve employee+object and exact context. Preview shows selected object's rows/co-worker impact only. Labels make reserve and action clear; reserve-only report filter does not itself exclude participants. Workbook decisions sheet exposes object scope, with legacy NULL labeled all objects of calculation. Preserve new corporate formatting and money/data fields.
+
+Root tests + separate author + independent finalreview. Deployment: backup DB; validate additive migration; deploy compatible code/newUI withrecorded preconditions; do not rollback tooldglobalinterpretation once scopedrows exist. No live test exclusions/payments on production. Historical exception for the emergency production delivery on2026-10-30 only: full CI/ordinary gate ordering were owner-deferred; required financial invariants were not waived. This exception does not apply to the2026-11-10 reconciliation, which requires independent Gate3/final review and exact-source full CI.
+
+Recovery/readiness: current canonical frontier38 uses a new immutable V38 recovery profile; table/AUTO inventories remain105/59. Preserve historical V37 profile byte-for-byte. Existing forward-frontier assertions advance to38; historical migration37 tests remain37.

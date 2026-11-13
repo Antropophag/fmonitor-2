@@ -1,0 +1,3 @@
+# Integration design
+
+Base main60ed34ac; merge existing reviewed delivery branches preserving authorship, then compare every actual PHP source hash and published guide. Preserve stronger base fixes and record deliberate source differences. Do not import unrelated unshipped PTO/contractor WIP. Existing regression tests retain their historical RED/review provenance; root authors integration additions before separate-author code repairs. Schema38 and backup profiles are integrated together. Production receipt gap at v14 is recorded without data repair. Full local suites prohibited; bounded local checks plus canonical full Quality Graph CI and independent required reviews.

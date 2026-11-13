@@ -1,0 +1,7 @@
+# Object actual dates —2026-10-30
+
+Owner requested factual start and finish dates in the general object queue. Bounded read-model/UI slice: add `Факт`, reading the durable installation opening date and the current PTO fact date after the latest versioned correction. Planned or declaration dates never substitute for unknown facts; missing values display `—`. Reads are batched and create no facts or schema.
+
+Root authored the specification and regression; implementation author was `/root/otiz_excel_executor`. The focused Yii queue regression passes and proves current corrections, unknown values and read-only behavior. PHP lint and diff-check pass. Independent review [OBJECT-ACTUAL-DATES-20261030](../../reviews/code/OBJECT-ACTUAL-DATES-20261030.md) is APPROVED. The owner-authorized short code→review→production exception applies; full CI and ordinary gates remain deferred.
+
+Worktree `fmonitor-2-object-actual-dates-20261030`, base `ffba36b7`. Evidence `~/.local/share/fmonitor-2/object-actual-dates-20261030/`. Status: approved and deployed 2026-10-30 at 14:57:07 MSK (backup timestamp `20261030T115707Z`). Deployment evidence confirms that host and PHP-container hashes equal the independently reviewed runtime hashes. The production read check passed for 62 returned rows across two queue reads: 50 rows from the general queue page and 12 completed-object rows. All completed rows had both factual dates; the read created no facts or schema.
