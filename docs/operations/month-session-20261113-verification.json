@@ -1,0 +1,28 @@
+{
+  "change": "persistent-month-session",
+  "planned_paths": [
+    "config/yii/web.php",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/month-session-20261113-verification.json",
+    "docs/operations/month-session-20261113.md",
+    "specs/MONTH-SESSION-001.md",
+    "tests/Runtime/production_runtime_admin_browser.mjs",
+    "tests/Yii2/month_session_browser.mjs",
+    "tests/Yii2/user_access_browser.mjs",
+    "tests/Yii2/yii2_authentication_001_test.php",
+    "tests/Yii2/yii2_month_session_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "MONTH-SESSION-001",
+      "acceptance_id": "A1-A5",
+      "spec_path": "specs/MONTH-SESSION-001.md",
+      "seam": "real Yii login, persistent browser restart, external GET, invalid and valid CSRF logout",
+      "tests": [
+        "tests/Yii2/yii2_month_session_001_test.php",
+        "tests/Yii2/yii2_session_failure_001_test.php"
+      ]
+    }
+  ]
+}
