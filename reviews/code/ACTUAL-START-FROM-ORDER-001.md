@@ -62,3 +62,18 @@ The correction preserves every complete payload, including empty and one-byte in
 New short payloads skip only insertion into `fm2_assignment_order_original_starts`, whose schema requires a byte size of at least five, and continue through the original owner to its established `not_pdf` receipt. No opening can follow because only accepted or replayed original results proceed to canonical start lookup. The existing transport corpus retains `unsafe_pdf`, ordinary `not_pdf`, exact replay, receipt shape, authorization, persistence failure and the exact 20 MiB boundary; the new cases add one-byte `not_pdf` and changed-payload replay protection.
 
 Retained RED evidence records the former 503 misclassification and the rejected first fix that allowed an accepted request to borrow a changed short payload. `short-pdf-final.log` records the complete transport test passing at executable source `9da95ea58db442198a44f714723a30ced1202cef5c67ad576c435af3f6b83a34`. `git diff --check` is clean. Exact-source full GitHub CI remains required and is not called GREEN by this delta review.
+
+## PR292 + PR293 stack — integration-only review
+
+- Reviewer: `/root/pr_test_closure`; no authorship in either feature or the integration resolution.
+- Approved parents: PR293 `3ae555d73be6820634c6d546d4893ca151d4ee83` and PR292 `0c5c91470fab55b3ad9383ae04ea77c1aa60003c`.
+- Prepared combined candidate source before this review record: `d15f845c79ebae3d52a9242329c6c481b5cdd3a96e0ded6ab2af038302be138c`.
+- Combined executable source: `2148cc5830b3bb530949b5f3c6eab5ce384ddde3a61983a21bc09c90aa455b09`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20261113T145958Z-fd9b2515b1/package.json`.
+- Verdict: **APPROVED** for the integration composition only; no findings.
+
+Every merged product and test blob is byte-identical to its approved parent. There was no product or test conflict. `tools/verification/suites.tsv` is the exact semantic union: it retains the PR293 original-start HTTP, browser and metadata registrations and adds the PR292 month-session browser registration; inventory validation passed. The only content conflict, `docs/operations/current-delivery-goal.md`, keeps the current two-PR merge objective and both complete historical feature-goal sections without changing either contract or claiming CI success.
+
+The combined verification input includes both contracts, all PR292 planned paths, and the MONTH-SESSION-001 A1–A5 mapping alongside the unchanged ACTUAL-START-FROM-ORDER-001 mappings. The original-start delivery record adds only the stacked-head/integration explanation. `missing_tests` is empty and `git diff --check` is clean.
+
+`combined-browser.log` records both `yii2_month_session_001_test.php` and `yii2_original_start_browser_001_test.php` passing together at executable source `2148cc5830b3bb530949b5f3c6eab5ce384ddde3a61983a21bc09c90aa455b09`. This confirms the composed session configuration and signed-start browser fixtures coexist. This review does not repeat either already-approved feature review, claim automated admission, or call the required exact-source full GitHub CI GREEN.

@@ -29,12 +29,12 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
             'class' => ReliableSession::class,
             'name' => (static function(): string {$name=getenv('FMONITOR_YII_SESSION_COOKIE');return is_string($name)&&preg_match('/^[A-Za-z][A-Za-z0-9_]{1,63}$/D',$name)===1?$name:'fm2yii';})(),
             'savePath' => getenv('FMONITOR_YII_SESSION_PATH') ?: (getenv('FMONITOR_SESSION_STATE_ROOT') ?: '/home/fmonitor/.local/state/fmonitor2') . '/yii-sessions',
-            'timeout' => 604800,
+            'timeout' => 2592000,
             'useStrictMode' => true,
             'cookieParams' => [
-                'lifetime' => 604800, 'path' => '/pilot', 'httponly' => true,
+                'lifetime' => 2592000, 'path' => '/pilot', 'httponly' => true,
                 'secure' => getenv('FMONITOR_TRUSTED_REQUEST_SCHEME') === 'https',
-                'sameSite' => yii\web\Cookie::SAME_SITE_STRICT,
+                'sameSite' => yii\web\Cookie::SAME_SITE_LAX,
             ],
         ],
         'user' => [

@@ -26,10 +26,13 @@
     "app/YiiRuntime/Views/object-card.php",
     "app/YiiRuntime/Views/original-history.php",
     "app/YiiRuntime/Views/original.php",
+    "config/yii/web.php",
     "docs/fmonitor-2-pilot-data-model.md",
     "docs/fmonitor-2-pilot-spec.md",
     "docs/operations/actual-start-from-assignment-order-20261113.md",
     "docs/operations/current-delivery-goal.md",
+    "docs/operations/month-session-20261113-verification.json",
+    "docs/operations/month-session-20261113.md",
     "openspec/changes/actual-start-from-assignment-order/.openspec.yaml",
     "openspec/changes/actual-start-from-assignment-order/design.md",
     "openspec/changes/actual-start-from-assignment-order/proposal.md",
@@ -37,6 +40,7 @@
     "openspec/changes/actual-start-from-assignment-order/tasks.md",
     "openspec/changes/actual-start-from-assignment-order/verification-input.json",
     "specs/ACTUAL-START-FROM-ORDER-001.md",
+    "specs/MONTH-SESSION-001.md",
     "tests/AssignmentOrderComposition/confirmed_original_opening_001_test.php",
     "tests/AssignmentOrderComposition/original_start_001_test.php",
     "tests/AssignmentOrderComposition/original_start_concurrency_001_test.php",
@@ -62,6 +66,7 @@
     "tests/Otiz/settlement_v2_upgrade_001_test.php",
     "tests/Runtime/deadline_transfer_certificate_recovery_001_test.php",
     "tests/Runtime/object_details_editing_recovery_001_test.php",
+    "tests/Runtime/production_runtime_admin_browser.mjs",
     "tests/Runtime/production_runtime_browser_001_test.php",
     "tests/Runtime/runtime_jobs_recovery_001_test.php",
     "tests/Runtime/runtime_readiness_load_001_test.php",
@@ -78,14 +83,18 @@
     "tests/Yii2/InspectionFixture.php",
     "tests/Yii2/PreopeningFixture.php",
     "tests/Yii2/feedback_schema_matrix.php",
+    "tests/Yii2/month_session_browser.mjs",
     "tests/Yii2/original_start_browser.mjs",
     "tests/Yii2/preopening_browser.mjs",
+    "tests/Yii2/user_access_browser.mjs",
+    "tests/Yii2/yii2_authentication_001_test.php",
     "tests/Yii2/yii2_construction_control_preopening_001_test.php",
     "tests/Yii2/yii2_control_engineer_assignment_001_test.php",
     "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php",
     "tests/Yii2/yii2_installer_utilization_forecast_001_test.php",
     "tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php",
     "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
+    "tests/Yii2/yii2_month_session_001_test.php",
     "tests/Yii2/yii2_object_card_001_test.php",
     "tests/Yii2/yii2_object_card_stage_actions_001_test.php",
     "tests/Yii2/yii2_original_start_browser_001_test.php",
@@ -133,6 +142,16 @@
         "tests/InstallationProcess/original_start_schema_001_test.php",
         "tests/Runtime/runtime_readiness_load_001_test.php",
         "tests/Runtime/runtime_jobs_recovery_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "MONTH-SESSION-001",
+      "acceptance_id": "A1-A5",
+      "spec_path": "specs/MONTH-SESSION-001.md",
+      "seam": "real Yii login, persistent browser restart, external GET, invalid and valid CSRF logout",
+      "tests": [
+        "tests/Yii2/yii2_month_session_001_test.php",
+        "tests/Yii2/yii2_session_failure_001_test.php"
       ]
     }
   ]
